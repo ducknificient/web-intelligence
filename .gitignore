@@ -1,0 +1,6 @@
+go/vendor
+ui/node_modules
+crawl-log
+error-log
+temp
+matlab

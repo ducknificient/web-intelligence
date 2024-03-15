@@ -1,0 +1,25 @@
+
+    <div class="d-flex flex-column flex-shrink-0 p-3 spilcomponent-sidebar" style="width: 280px; height: 100vh">
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
+            <img src="{{ sidebar.applogo }}" alt="" width="32" height="32" class="rounded me-2">
+        <span class="fs-4">{{ sidebar.appname }}</span>
+        </a>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <ng-template ngFor let-item [ngForOf]="sidebar.sidebarLinkList">
+                <app-sidebar-link [sidebarLink]="item"></app-sidebar-link>
+            </ng-template>
+        </ul>
+        <hr>
+        <div class="dropdown">
+        <a href="#" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="{{ sidebar.profilepicture }}" alt="" width="32" height="32" class="rounded-circle me-2">
+            <strong>{{sidebar.username}}</strong>
+        </a>
+        <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser2">
+            <ng-template ngFor let-item [ngForOf]="sidebar.dropdownLinkList">
+                <app-sidebar-dropdownlink [dropdownLink]="item"></app-sidebar-dropdownlink>
+            </ng-template>
+        </ul>
+        </div>
+    </div>

@@ -1,0 +1,30 @@
+<main>
+  
+  <div class="d-flex flex-row">
+    <!-- seperate sidebar and content -->
+    <div>
+      <app-sidebar [sidebar]="sidebar"></app-sidebar>
+    </div>
+    
+    <div class="flex-grow-1">
+
+      <div class="d-flex flex-column min-vh-100">
+
+        <!-- seperate content and footer -->
+        <div class="flex-grow-1 content-padding" [style.height.px]="calculateContentHeight()">
+          <div class="shadow p-3 mb-5 rounded h-100 w-100 d-inline-block" style="background-color: #efe5e5;">
+            <router-outlet></router-outlet>
+          </div>
+        </div>
+        
+        <div class="mt-auto w-100">
+          <app-footer></app-footer>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</main>

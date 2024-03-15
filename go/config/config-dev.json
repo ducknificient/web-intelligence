@@ -1,0 +1,38 @@
+{
+    "appname": "MINICRAWLER",
+    "appdomain": "http://192.168.15.221:4500",
+    "appip": "0.0.0.0",
+    "appport": "8090",
+    "production": "false",
+    "version": "0.1-beta",
+    "pglist":[
+        {
+            "host":"172.24.1.100",
+            "dbname":"s2",
+            "username":"s2usr",
+            "password":"s2usr",
+            "port":"5432",
+            "sslmode":"disable",
+            "poolmaxconn":"10"
+        }
+    ],
+    "selectedpgdb":"s2",
+    "aeskey": "minicrawler",
+    "servicename":"minicrawler",
+    "userheader":"ct-s-fxsf",
+    "pathlog": "/home/spil/Projects/minicrawler/go/log/zaplogger",
+    "pathtemp": "/home/spil/temp/minicrawler/temp",
+    "pathcsv": "/home/spil/temp/minicrawler/temp/csv",
+    "pathpdf": "/home/spil/temp/minicrawler/temp/pdf",
+    "pathxlsx": "/home/spil/temp/minicrawler/temp/xlsx",
+    "pathgraph": "/home/spil/Projects/minicrawler/temp/graph",
+    "pathcrawllog":"/home/spil/Projects/minicrawler/go/log/crawl-log",
+    "pathcrawlerror":"/home/spil/Projects/minicrawler/go/log/error-log",
+    "pathcrawlhref":"/home/spil/Projects/minicrawler/go/log/href-log",
+    "pathcrawlpdf":"/home/spil/Projects/minicrawler/go/pdf",
+    "filesep": "/",
+    "cookiename": "",
+    "llm-gpt-apikey":"",
+    "llm-gemini-apikey":"",
+    "document-location":"/home/spil/Projects/spilgpt/spilgpt-backend/python/pdf/content.json"
+}
