@@ -48,6 +48,7 @@ func (s *DefaultRouter) GetHandler() http.Handler {
 
 	/* BUSINESS LOGIC */
 	router.POST("/crawl/start", defaultController.StartCrawling)
+	router.POST("/crawl/stop", defaultController.StopCrawling)
 	router.POST("/crawl/list", defaultController.CrawlpageList)
 
 	return router

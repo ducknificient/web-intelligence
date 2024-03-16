@@ -15,19 +15,24 @@ type Controller interface {
 	ServeFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 	DatabasePing(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 	StartCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
+	StopCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 	CrawlpageList(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 }
 
 type DefaultController struct {
+	logger         logger.Logger
 	response       Response
 	crawlerService CrawlerService
+	CrawlStop      bool
 }
 
 func NewDefaultController(logger logger.Logger) (default_controller *DefaultController) {
 	return &DefaultController{
+		logger: logger,
 		response: &DefaultResponse{
 			Logger: logger,
 		},
+		CrawlStop: false,
 	}
 }
 

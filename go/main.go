@@ -44,6 +44,12 @@ func main() {
 		panic(err)
 	}
 
+	err = default_logger.CheckEmptyLog()
+	if err != nil {
+		// logger.DefaultLogger.Logger.Error("")
+		panic(err)
+	}
+
 	// postgresDB := datastore.NewPostgreSQLDB(ctx, default_logger)
 	// err = postgresDB.Connect()
 	// if err != nil {

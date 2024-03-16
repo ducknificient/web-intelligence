@@ -13,6 +13,9 @@ import (
 
 type CrawlerService interface {
 	Crawling(seedurl string, task string) (err error)
+	TestCrawling()
+	StartCrawling() (err error)
+	StopCrawling() (err error)
 	CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error)
 }
 
@@ -49,12 +52,53 @@ func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request
 	// task = `KEMENDAG`
 	// seedurl = "https://www.kemendag.go.id/berita/perdagangan?page=8"
 
-	err = u.crawlerService.Crawling(request.Task, request.SeedURL)
+	go func() (err error) {
+		err = u.crawlerService.Crawling(request.Task, request.SeedURL)
+		if err != nil {
+			u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
+			return
+		}
+
+		return err
+	}()
+
 	if err != nil {
-		u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
+		// u.response.Error(w, r, err, prefixLog, fmt.Sprintf("go routines crawl error."))
+		u.logger.Error(fmt.Sprintf("go routines crawl error."))
 		return
 	}
 
+	// err = u.crawlerService.StartCrawling()
+	// u.crawlerService.TestCrawling()
+
+	u.response.Default(w, http.StatusOK, true, "ok")
+	return
+}
+
+func (u *DefaultController) StopCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	prefixLog := `StopCrawling`
+	defer u.response.Panic(w, r)
+
+	b, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableMarshal)
+		return
+	}
+
+	var (
+		request entity.CrawlingReq
+	)
+
+	err = json.Unmarshal(b, &request)
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableUnmarshal)
+		return
+	}
+
+	u.crawlerService.StopCrawling()
+
+	u.response.Default(w, http.StatusOK, true, "ok")
 	return
 }
 

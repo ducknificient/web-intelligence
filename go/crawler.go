@@ -8,14 +8,12 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/ducknificient/web-intelligence/go/datastore"
 	"github.com/ducknificient/web-intelligence/go/entity"
 	"github.com/ducknificient/web-intelligence/go/logger"
 )
-
-type Crawler interface {
-}
 
 type BasicCrawling struct {
 	logger    logger.Logger
@@ -33,11 +31,11 @@ func NewCrawler(datastore datastore.Datastore) (c *BasicCrawling) {
 
 }
 
-func (c *BasicCrawling) CustomCrawlLogic() (isstop bool) {
-	isstop = false
+// func (c *BasicCrawling) CustomCrawlLogic() (isstop bool) {
+// 	isstop = false
 
-	return isstop
-}
+// 	return isstop
+// }
 
 func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 
@@ -107,9 +105,11 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 			break
 		}
 
-		// if c.IsStop {
-		// 	break
-		// }
+		if c.IsStop {
+			fmt.Println("stopping from controller")
+			c.logger.CrawlLog("stopping crawl")
+			break
+		}
 
 		// if line == 1 {
 		// 	fmt.Println("testing cloudflare")
@@ -119,6 +119,34 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 	}
 
 	return err
+}
+
+func (c *BasicCrawling) StartCrawling() (err error) {
+	c.IsStop = true
+
+	return err
+}
+
+func (c *BasicCrawling) StopCrawling() (err error) {
+	c.IsStop = false
+
+	return err
+}
+
+func (c *BasicCrawling) TestCrawling() {
+
+	for {
+
+		fmt.Println("controller starting")
+
+		if !c.IsStop {
+			fmt.Println("stopping crawl")
+			break
+		}
+
+		time.Sleep(1000 * time.Microsecond)
+	}
+
 }
 
 func (c *BasicCrawling) Fetch(url string) (string, error) {
