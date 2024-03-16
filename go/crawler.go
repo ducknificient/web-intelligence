@@ -53,7 +53,8 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 		line++
 
 		u := Q.Dequeue() // Get a URL from Q
-		c.logger.CrawlLog(fmt.Sprintf("%#v. %#v\n", line, u))
+		c.logger.CrawlLog(fmt.Sprintf("%#v. %#v", line, u))
+		// fmt.Printf("%#v. %#v", line, u)
 
 		fr, err := c.Fetch(u) // Fetch results
 		if err != nil {
@@ -63,13 +64,17 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 			return err
 		}
 
+		// fmt.Printf("fetch res: %#v\n")
+		// fmt.Printf(" header: %#v\n", fr.Header)
+		c.logger.CrawlLog(fmt.Sprintf(" header: %#v\n", fr.Header))
+
 		if fr.Header == `pdf` {
 
 			// store
 
 			err = c.StorePdf(fr.PdfFilename, u, fr.PdfFile) // Store it in D
 			if err != nil {
-				errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} ", seedurl, task, err.Error(), u, du)
+				errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} \n", seedurl, task, err.Error(), u, du)
 				err = errors.New(errMsg)
 				c.logger.CrawlError(errMsg)
 				return err
@@ -82,7 +87,7 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 			if strings.TrimSpace(du) != "" { // If the HTML document is not empty
 				err = c.StoreD(du, u) // Store it in D
 				if err != nil {
-					errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} ", seedurl, task, err.Error(), u, du)
+					errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} \n", seedurl, task, err.Error(), u, du)
 					err = errors.New(errMsg)
 					c.logger.CrawlError(errMsg)
 					return err
@@ -91,8 +96,12 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 				// check apakah .pdf atau bukan
 
 				L, err := c.ExtractURL(u, du) // Extract all "clean" hrefs from d(u)
+
+				c.logger.CrawlLog(fmt.Sprintf(" total href: %#v\n", len(L)))
+				// fmt.Printf(" total href: %#v\n", len(L))
+
 				if err != nil {
-					errMsg = fmt.Sprintf("Unable to extract url. task:{%#v} .seedurl:{%#v} .err: %#v .url:{%#v} .content: {%#v} ", seedurl, task, err.Error(), u, du)
+					errMsg = fmt.Sprintf("Unable to extract url. task:{%#v} .seedurl:{%#v} .err: %#v .url:{%#v} .content: {%#v} \n", seedurl, task, err.Error(), u, du)
 					err = errors.New(errMsg)
 					c.logger.CrawlError(errMsg)
 					return err
@@ -103,7 +112,7 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 
 					isContainsD, err := c.ContainsD(v)
 					if err != nil {
-						errMsg = fmt.Sprintf("Unable to check ContainsD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} . ", seedurl, task, err.Error(), u)
+						errMsg = fmt.Sprintf("Unable to check ContainsD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} . \n", seedurl, task, err.Error(), u)
 						err = errors.New(errMsg)
 						c.logger.CrawlError(errMsg)
 						return err
@@ -238,8 +247,6 @@ func (c *BasicCrawling) Fetch(url string) (fetchres entity.FetchResult, err erro
 		fetchres.HTMLText = string(respbody)
 	}
 
-	fetchres.HTMLText = string(respbody)
-
 	return fetchres, err
 }
 
@@ -247,7 +254,7 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 	// Parse base URL
 	base, err := url.Parse(inputurl)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to parse url. %#v. err: %#v", inputurl, err.Error())
+		errMsg := fmt.Sprintf("Unable to parse url. %#v. err: %#v \n", inputurl, err.Error())
 		err = errors.New(errMsg)
 		c.logger.Error(errMsg)
 		return filteredHrefs, err
@@ -269,7 +276,7 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 	// Iterate through all matches
 	for a, match := range matches {
 		href := match[1]
-		c.logger.CrawlLog(fmt.Sprintf("%#v. href : %#v ,", a, href))
+		c.logger.CrawlLog(fmt.Sprintf("%#v. href : %#v \n", a, href))
 
 		// Parse href URL
 		parsedHref, err := url.Parse(href)
@@ -289,7 +296,7 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 					c.logger.CrawlLog(fmt.Sprintf("exists: %#v\n", href))
 					filteredHrefs = append(filteredHrefs, href)
 				} else {
-					c.logger.CrawlLog(fmt.Sprintf("%#v. host != 0, href : %#v ,", a, href))
+					c.logger.CrawlLog(fmt.Sprintf("%#v. host != 0, href : %#v \n", a, href))
 				}
 			}
 		} else {
@@ -308,7 +315,7 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 				filteredHrefs = append(filteredHrefs, newHref)
 			} else {
 				// fmt.Printf("href: %#v\n", newHref)
-				c.logger.CrawlLog(fmt.Sprintf("%#v. host == 0, href : %#v ,", a, href))
+				c.logger.CrawlLog(fmt.Sprintf("%#v. host == 0, href : %#v \n", a, href))
 			}
 
 		}

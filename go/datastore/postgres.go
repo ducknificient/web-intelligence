@@ -120,10 +120,10 @@ func (db *PostgresDB) StoreE(link string, href string, task string) (err error) 
 	return err
 }
 
-func (db *PostgresDB) ContainsD(url string) (contains bool, err error) {
+func (db *PostgresDB) ContainsD(link string) (contains bool, err error) {
 
 	// Prepare SQL statement to check if data exists in tableD
-	row := db.Conn.QueryRow(context.Background(), "SELECT COUNT(*) FROM webintelligence.tableD WHERE u = $1", url)
+	row := db.Conn.QueryRow(db.Ctx, "SELECT COUNT(*) FROM webintelligence.crawlpage WHERE link = $1", link)
 	var count int
 	err = row.Scan(&count)
 	if err != nil {

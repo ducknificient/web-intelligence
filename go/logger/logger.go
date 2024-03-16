@@ -164,8 +164,9 @@ func (l *DefaultLogger) SetupCrawlLogFile() (err error) {
 	// currentTime := time.Now().Format("2006-01-02_15-04-05")
 	currentTime := time.Now().Format("2006-01-02")
 
-	filename := l.PathCrawlLog + *config.Conf.FileSep + currentTime + `_` + `crawl_log`
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
+	filename := l.PathCrawlLog + *config.Conf.FileSep + currentTime + "_" + "crawl_log"
+
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
@@ -173,23 +174,23 @@ func (l *DefaultLogger) SetupCrawlLogFile() (err error) {
 	l.CrawlLogFile = file
 
 	error_filename := l.PathCrawlError + *config.Conf.FileSep + currentTime + `_` + `error_log`
-	error_file, err := os.OpenFile(error_filename, os.O_RDWR|os.O_CREATE, 0666)
+
+	error_file, err := os.OpenFile(error_filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
-
-	l.CrawlLogFile = error_file
+	l.CrawlErrorFile = error_file
 
 	return err
 
 }
 
 func (l *DefaultLogger) CrawlLog(msg string) {
-	fmt.Fprintf(l.CrawlLogFile, "%#v", msg)
+	fmt.Fprintf(l.CrawlLogFile, "%v", msg)
 }
 
 func (l *DefaultLogger) CrawlError(msg string) {
-	fmt.Fprintf(l.CrawlErrorFile, "%#v", msg)
+	fmt.Fprintf(l.CrawlErrorFile, "%v", msg)
 }
 
 func combine() {

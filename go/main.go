@@ -40,14 +40,14 @@ func main() {
 	default_logger.PathCrawlLog = *config.Conf.PathCrawlLog
 	default_logger.PathCrawlError = *config.Conf.PathCrawlError
 	default_logger.PathCrawlPdf = *config.Conf.PathCrawlPdf
-	err = default_logger.SetupCrawlLogFile()
+
+	err = default_logger.CheckEmptyLog()
 	if err != nil {
 		panic(err)
 	}
 
-	err = default_logger.CheckEmptyLog()
+	err = default_logger.SetupCrawlLogFile()
 	if err != nil {
-		// logger.DefaultLogger.Logger.Error("")
 		panic(err)
 	}
 

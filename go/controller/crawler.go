@@ -72,6 +72,8 @@ func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request
 	// err = u.crawlerService.StartCrawling()
 	// u.crawlerService.TestCrawling()
 
+	fmt.Println("crawl ended")
+
 	u.response.Default(w, http.StatusOK, true, "ok")
 	return
 }
