@@ -162,7 +162,7 @@ func (l *DefaultLogger) CheckEmptyLog() (err error) {
 
 func (l *DefaultLogger) SetupCrawlLogFile() (err error) {
 	// currentTime := time.Now().Format("2006-01-02_15-04-05")
-	currentTime := time.Now().Format("2006-01-02_15-04")
+	currentTime := time.Now().Format("2006-01-02_15")
 
 	filename := l.PathCrawlLog + *config.Conf.FileSep + currentTime + "_" + "crawl_log"
 
