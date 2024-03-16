@@ -57,39 +57,39 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 	c.Task = task
 	c.SeedURL = seedurl
 
-	existingQueue, err := c.GetExistingQueue()
-	if err != nil {
-		c.logger.CrawlError(errMsg)
-		return
-	}
+	// existingQueue, err := c.GetExistingQueue()
+	// if err != nil {
+	// 	c.logger.CrawlError(errMsg)
+	// 	return
+	// }
 
-	// get
+	// err = c.GetLatestSeedUrl()
+	// if err != nil {
+	// 	c.logger.CrawlError(errMsg)
+	// 	return
+	// }
 
-	err = c.GetLatestSeedUrl()
-	if err != nil {
-		c.logger.CrawlError(errMsg)
-		return
-	}
+	// Q = NewQueueFromExisting(existingQueue)
 
-	Q = NewQueueFromExisting(existingQueue)
-	// Q = NewQueue()
+	Q = NewQueue()
 
 	Q.Enqueue(c.SeedURL)
 
 	line := 0
 	for !Q.IsEmpty() {
 		line++
-
+		// url.Error
 		u := Q.Dequeue() // Get a URL from Q
 		c.logger.CrawlLog(fmt.Sprintf("%#v. %#v", line, u))
 		// fmt.Printf("%#v. %#v", line, u)
 
 		fr, err := c.Fetch(u) // Fetch results
 		if err != nil {
+			fmt.Printf("%#v", err)
 			errMsg = fmt.Sprintf("Unable to fetch. task:{%#v} .seedurl:{%#v} .err: %#v .u: %#v", seedurl, task, err.Error(), u)
-			err = errors.New(errMsg)
 			c.logger.CrawlError(errMsg)
-			return err
+			Q.Enqueue(u)
+			continue
 		}
 
 		// fmt.Printf("fetch res: %#v\n")
@@ -255,37 +255,48 @@ func (c *BasicCrawling) Fetch(url string) (fetchres entity.FetchResult, err erro
 	fetchres.DocumentContentType = resp.Header.Get("Content-Type")
 	fetchres.DocumentFile = respbody
 
-	switch fetchres.DocumentContentType {
-	case "html":
+	if strings.Contains(fetchres.DocumentContentType, "html") {
+
 		fetchres.DocumentType = `html`
 		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
 		fetchres.DocumentFile = respbody
-	case "text":
+
+		c.logger.CrawlLog(fmt.Sprintf("url: %#v . header: %#v document type : %#v file: ", url, fetchres.DocumentContentType, fetchres.DocumentType))
+	} else if strings.Contains(fetchres.DocumentContentType, "text") {
 
 		// sementara buat semua text jadi html
 		fetchres.DocumentType = `html`
 		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
 		fetchres.DocumentFile = respbody
-	case "pdf":
+
+		c.logger.CrawlLog(fmt.Sprintf("url: %#v . header: %#v document type : %#v file: ", url, fetchres.DocumentContentType, fetchres.DocumentType))
+	} else if strings.Contains(fetchres.DocumentContentType, "pdf") {
 
 		fetchres.DocumentType = `pdf`
 		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
 		fetchres.DocumentFile = respbody
-	case "image":
+
+		c.logger.CrawlLog(fmt.Sprintf("url: %#v . header: %#v document type : %#v file: ", url, fetchres.DocumentContentType, fetchres.DocumentType))
+	} else if strings.Contains(fetchres.DocumentContentType, "image") {
 
 		fetchres.DocumentType = `image`
 		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
 		fetchres.DocumentFile = respbody
 
-	case "video":
+		c.logger.CrawlLog(fmt.Sprintf("url: %#v . header: %#v document type : %#v file: ", url, fetchres.DocumentContentType, fetchres.DocumentType))
+	} else if strings.Contains(fetchres.DocumentContentType, "video") {
 		fetchres.DocumentType = `video`
 		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
 		fetchres.DocumentFile = respbody
 
-	default:
+		c.logger.CrawlLog(fmt.Sprintf("url: %#v . header: %#v document type : %#v file: ", url, fetchres.DocumentContentType, fetchres.DocumentType))
+
+	} else {
 		fetchres.DocumentType = `unknown`
 		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
 		fetchres.DocumentFile = respbody
+
+		c.logger.CrawlLog(fmt.Sprintf("url: %#v . header: %#v document type : %#v file: ", url, fetchres.DocumentContentType, fetchres.DocumentType))
 	}
 
 	return fetchres, err
