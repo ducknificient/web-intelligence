@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"errors"
@@ -14,6 +14,14 @@ import (
 	"github.com/ducknificient/web-intelligence/go/entity"
 	"github.com/ducknificient/web-intelligence/go/logger"
 )
+
+type CrawlerService interface {
+	Crawling(seedurl string, task string) (err error)
+	TestCrawling()
+	StartCrawling() (err error)
+	StopCrawling() (err error)
+	CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error)
+}
 
 type BasicCrawling struct {
 	logger    logger.Logger
@@ -43,10 +51,30 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 	var (
 		errMsg string
 		du     string
+		Q      *Queue
 	)
 
-	Q := NewQueue()
-	Q.Enqueue(seedurl)
+	c.Task = task
+	c.SeedURL = seedurl
+
+	existingQueue, err := c.GetExistingQueue()
+	if err != nil {
+		c.logger.CrawlError(errMsg)
+		return
+	}
+
+	// get
+
+	err = c.GetLatestSeedUrl()
+	if err != nil {
+		c.logger.CrawlError(errMsg)
+		return
+	}
+
+	Q = NewQueueFromExisting(existingQueue)
+	// Q = NewQueue()
+
+	Q.Enqueue(c.SeedURL)
 
 	line := 0
 	for !Q.IsEmpty() {
@@ -66,24 +94,11 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 
 		// fmt.Printf("fetch res: %#v\n")
 		// fmt.Printf(" header: %#v\n", fr.Header)
-		c.logger.CrawlLog(fmt.Sprintf(" header: %#v\n", fr.Header))
+		c.logger.CrawlLog(fmt.Sprintf(" type: %#v .content type: %#v\n", fr.DocumentType, fr.DocumentContentType))
 
-		if fr.Header == `pdf` {
-
-			// store
-
-			err = c.StorePdf(fr.PdfFilename, u, fr.PdfFile) // Store it in D
-			if err != nil {
-				errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} \n", seedurl, task, err.Error(), u, du)
-				err = errors.New(errMsg)
-				c.logger.CrawlError(errMsg)
-				return err
-			}
-
-		} else if fr.Header == `html` {
-
-			du = fr.HTMLText
-
+		switch fr.DocumentType {
+		case "html":
+			du = string(fr.DocumentFile)
 			if strings.TrimSpace(du) != "" { // If the HTML document is not empty
 				err = c.StoreD(du, u) // Store it in D
 				if err != nil {
@@ -129,10 +144,14 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 					}
 				}
 			}
-		}
-
-		if line == 1000 {
-			break
+		default:
+			err = c.StoreDocument(u, fr.DocumentType, fr.DocumentFile, fr.DocumentContentType) // Store it in D
+			if err != nil {
+				errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} \n", seedurl, task, err.Error(), u, du)
+				err = errors.New(errMsg)
+				c.logger.CrawlError(errMsg)
+				return err
+			}
 		}
 
 		if c.IsStop {
@@ -233,18 +252,40 @@ func (c *BasicCrawling) Fetch(url string) (fetchres entity.FetchResult, err erro
 		return fetchres, err
 	}
 
-	// check apakah pdf atau bukan
-	if strings.Contains(resp.Header.Get("Content-Type"), "pdf") {
+	fetchres.DocumentContentType = resp.Header.Get("Content-Type")
+	fetchres.DocumentFile = respbody
 
-		fetchres.Header = `pdf`
-		fetchres.PdfFile = respbody
-		fetchres.PdfFilename = url
+	switch fetchres.DocumentContentType {
+	case "html":
+		fetchres.DocumentType = `html`
+		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
+		fetchres.DocumentFile = respbody
+	case "text":
 
-	} else if strings.Contains(resp.Header.Get("Content-Type"), "html") ||
-		strings.Contains(resp.Header.Get("Content-Type"), "text") {
+		// sementara buat semua text jadi html
+		fetchres.DocumentType = `html`
+		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
+		fetchres.DocumentFile = respbody
+	case "pdf":
 
-		fetchres.Header = `html`
-		fetchres.HTMLText = string(respbody)
+		fetchres.DocumentType = `pdf`
+		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
+		fetchres.DocumentFile = respbody
+	case "image":
+
+		fetchres.DocumentType = `image`
+		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
+		fetchres.DocumentFile = respbody
+
+	case "video":
+		fetchres.DocumentType = `video`
+		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
+		fetchres.DocumentFile = respbody
+
+	default:
+		fetchres.DocumentType = `unknown`
+		fetchres.DocumentContentType = resp.Header.Get("Content-Type")
+		fetchres.DocumentFile = respbody
 	}
 
 	return fetchres, err
@@ -334,9 +375,9 @@ func (c *BasicCrawling) StoreD(pagesource string, link string) (err error) {
 	return err
 }
 
-func (c *BasicCrawling) StorePdf(filename string, link string, pdf []byte) (err error) {
+func (c *BasicCrawling) StoreDocument(link string, documentype string, document []byte, documentcontenttype string) (err error) {
 
-	err = c.Datastore.StorePdf(filename, link, c.Task, pdf)
+	err = c.Datastore.StoreDocument(link, c.Task, documentype, document, documentcontenttype)
 	if err != nil {
 		return err
 	}
@@ -374,4 +415,27 @@ func (c *BasicCrawling) CrawlpageList(param entity.CrawlpageListParam) (dataList
 	}
 
 	return dataList, err
+}
+
+func (c *BasicCrawling) GetExistingQueue() (queue []string, err error) {
+
+	queue, err = c.Datastore.GetExistingQueue(c.Task)
+	if err != nil {
+		return queue, err
+	}
+
+	return queue, err
+}
+
+func (c *BasicCrawling) GetLatestSeedUrl() (err error) {
+
+	var seedurl string
+	seedurl, err = c.Datastore.GetLatestSeedUrl(c.Task, c.SeedURL)
+	if err != nil {
+		return err
+	}
+
+	c.SeedURL = seedurl
+
+	return err
 }

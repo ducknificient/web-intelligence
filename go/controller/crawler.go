@@ -8,18 +8,11 @@ import (
 
 	"github.com/ducknificient/web-intelligence/go/entity"
 	"github.com/ducknificient/web-intelligence/go/general"
+	"github.com/ducknificient/web-intelligence/go/service"
 	"github.com/julienschmidt/httprouter"
 )
 
-type CrawlerService interface {
-	Crawling(seedurl string, task string) (err error)
-	TestCrawling()
-	StartCrawling() (err error)
-	StopCrawling() (err error)
-	CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error)
-}
-
-func (c *DefaultController) NewCrawlerService(service CrawlerService) {
+func (c *DefaultController) NewCrawlerService(service service.CrawlerService) {
 	c.crawlerService = service
 }
 

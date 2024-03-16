@@ -77,6 +77,8 @@ create table crawlpage (
     pagesource text null,
     link text null,
     task text null,
+    documenttype text null,
+    mimetype text null,
     document bytea default null,
     created timestamp without time zone default now() not null,
     createdby text default 'POSTGRES',

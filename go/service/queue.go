@@ -1,4 +1,4 @@
-package main
+package service
 
 type Queue struct {
 	Queue []string
@@ -7,6 +7,12 @@ type Queue struct {
 // NewQueue initializes a new queue
 func NewQueue() *Queue {
 	return &Queue{Queue: []string{}}
+}
+
+func NewQueueFromExisting(queue []string) *Queue {
+	return &Queue{
+		Queue: queue,
+	}
 }
 
 // Enqueue adds an item to the queue

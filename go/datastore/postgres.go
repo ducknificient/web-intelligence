@@ -78,13 +78,13 @@ func (db *PostgresDB) StoreD(pagesource string, link string, task string) (err e
 
 }
 
-func (db *PostgresDB) StorePdf(filename string, link string, task string, pdf []byte) (err error) {
+func (db *PostgresDB) StoreDocument(link string, task string, documenttype string, document []byte, documentcontenttype string) (err error) {
 
 	// Prepare SQL statement to insert data
-	sqlStatement := `INSERT INTO webintelligence.crawlpage (pagesource, link, task, document) VALUES ($1, $2, $3, $4)`
-	_, err = db.Conn.Exec(db.Ctx, sqlStatement, filename, link, task, pdf)
+	sqlStatement := `INSERT INTO webintelligence.crawlpage (link, task,documenttype,document, mimetype) VALUES ($1, $2, $3, $4, $5)`
+	_, err = db.Conn.Exec(db.Ctx, sqlStatement, link, task, documenttype, document, documentcontenttype)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to insert into webintelligence.crawlpage. q: %v, param: %v,%v,%v,%v . err: %#v", sqlStatement, filename, link, task, pdf, err.Error())
+		errMsg := fmt.Sprintf("Unable to insert into webintelligence.crawlpage. q: %v, param: %v,%v,%v,%v,%v . err: %#v", sqlStatement, link, task, documenttype, document, documentcontenttype, err.Error())
 		err = errors.New(errMsg)
 		return err
 	}
@@ -111,7 +111,7 @@ func (db *PostgresDB) StoreE(link string, href string, task string) (err error) 
 		sqlStatement = `INSERT INTO webintelligence.crawlhref (link, href, task) VALUES ($1, $2, $3)`
 		_, err := db.Conn.Exec(db.Ctx, sqlStatement, link, href, task)
 		if err != nil {
-			errMsg := fmt.Sprintf("Unable to insert into webintelligence.crawlhref. q: %v, param: %v,%v . err: %#v", sqlStatement, link, href, err.Error())
+			errMsg := fmt.Sprintf("Unable to insert into webintelligence.crawlhref. q: %v, param: %v,%v,%v . err: %#v", sqlStatement, link, href, task, err.Error())
 			err = errors.New(errMsg)
 			return err
 		}

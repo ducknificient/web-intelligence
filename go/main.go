@@ -15,6 +15,7 @@ import (
 	"github.com/ducknificient/web-intelligence/go/datastore"
 	"github.com/ducknificient/web-intelligence/go/logger"
 	"github.com/ducknificient/web-intelligence/go/router"
+	"github.com/ducknificient/web-intelligence/go/service"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -89,7 +90,7 @@ func main() {
 	// 	VectorPool: pgvectorpool.Conn,
 	// }
 
-	crawler := NewCrawler(postgresDB, default_logger)
+	crawler := service.NewCrawler(postgresDB, default_logger)
 
 	// init controller
 

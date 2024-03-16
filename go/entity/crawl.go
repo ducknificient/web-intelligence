@@ -1,10 +1,10 @@
 package entity
 
 type FetchResult struct {
-	Header      string
-	PdfFile     []byte
-	PdfFilename string
-	HTMLText    string
+	HTMLText            string
+	DocumentFile        []byte
+	DocumentContentType string // MIME type
+	DocumentType        string
 }
 
 type CrawlingReq struct {

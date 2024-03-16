@@ -5,6 +5,7 @@ import (
 
 	"github.com/ducknificient/web-intelligence/go/config"
 	"github.com/ducknificient/web-intelligence/go/logger"
+	"github.com/ducknificient/web-intelligence/go/service"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -22,7 +23,7 @@ type Controller interface {
 type DefaultController struct {
 	logger         logger.Logger
 	response       Response
-	crawlerService CrawlerService
+	crawlerService service.CrawlerService
 	CrawlStop      bool
 }
 
