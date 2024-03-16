@@ -6,13 +6,13 @@
       <app-sidebar [sidebar]="sidebar"></app-sidebar>
     </div>
     
-    <div class="flex-grow-1">
+    <div class="flex-grow-1" style="background-color: #efe5e5;">
 
       <div class="d-flex flex-column min-vh-100">
 
         <!-- seperate content and footer -->
         <div class="flex-grow-1 content-padding" [style.height.px]="calculateContentHeight()">
-          <div class="shadow p-3 mb-5 rounded h-100 w-100 d-inline-block" style="background-color: #efe5e5;">
+          <div class="shadow p-3 mb-5 rounded h-100 w-100 d-inline-block" style="background-color: white;">
             <router-outlet></router-outlet>
           </div>
         </div>
