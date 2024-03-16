@@ -34,6 +34,8 @@ set search_path = webintelligence,public;
 create table tabled (
     du text null,
     u text null,
+    task text null,
+    document bytea default null,
     created timestamp without time zone default now() not null,
     createdby text default 'POSTGRES',
     updated timestamp without time zone default now() not null,
@@ -75,6 +77,7 @@ create table crawlpage (
     pagesource text null,
     link text null,
     task text null,
+    document bytea default null,
     created timestamp without time zone default now() not null,
     createdby text default 'POSTGRES',
     updated timestamp without time zone default now() not null,

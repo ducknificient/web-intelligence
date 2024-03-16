@@ -78,6 +78,21 @@ func (db *PostgresDB) StoreD(pagesource string, link string, task string) (err e
 
 }
 
+func (db *PostgresDB) StorePdf(filename string, link string, task string, pdf []byte) (err error) {
+
+	// Prepare SQL statement to insert data
+	sqlStatement := `INSERT INTO webintelligence.crawlpage (pagesource, link, task, document) VALUES ($1, $2, $3, $4)`
+	_, err = db.Conn.Exec(db.Ctx, sqlStatement, filename, link, task, pdf)
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to insert into webintelligence.crawlpage. q: %v, param: %v,%v,%v,%v . err: %#v", sqlStatement, filename, link, task, pdf, err.Error())
+		err = errors.New(errMsg)
+		return err
+	}
+
+	return err
+
+}
+
 func (db *PostgresDB) StoreE(link string, href string, task string) (err error) {
 
 	// Prepare SQL statement to check if data exists

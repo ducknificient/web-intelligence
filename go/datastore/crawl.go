@@ -31,7 +31,6 @@ func (db *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList [
 	}
 	var offset = (qPageInt - 1) * toffset
 
-	fmt.Println("before query row")
 	// Prepare SQL statement to check if data exists
 	sqlStatement := `SELECT 
 		COUNT(1) 
@@ -49,8 +48,6 @@ func (db *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList [
 		return dataList, err
 	}
 
-	fmt.Println("query row")
-
 	if count == 0 {
 		return dataList, err
 	}
@@ -65,13 +62,14 @@ func (db *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList [
 	ORDER BY cp.created DESC
 	LIMIT $1 OFFSET $2`
 
-	fmt.Println("before query")
 	// sqlStatement = `SELECT
 	// cp.pagesource,
 	// cp.link,
 	// cp.task
 	// FROM webintelligence.crawlpage cp
 	// ORDER BY cp.created DESC`
+
+	db.Logger.Info(sqlStatement)
 	rows, err := db.Conn.Query(db.Ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
 	if err != nil {
 		errMsg = fmt.Sprintf("Unable to select from webintelligence.crawlpage. q: %v. param: %v,%v,%v .err: %#v", sqlStatement, limit, offset, `%`+param.Search+`%`, err.Error())
@@ -79,7 +77,6 @@ func (db *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList [
 		return dataList, err
 	}
 
-	fmt.Println("query")
 	defer rows.Close()
 	for rows.Next() {
 		var (

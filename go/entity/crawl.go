@@ -1,5 +1,12 @@
 package entity
 
+type FetchResult struct {
+	Header      string
+	PdfFile     []byte
+	PdfFilename string
+	HTMLText    string
+}
+
 type CrawlingReq struct {
 	Task    string `json:"task"`
 	SeedURL string `json:"seedurl"`

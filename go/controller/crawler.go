@@ -52,19 +52,20 @@ func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request
 	// task = `KEMENDAG`
 	// seedurl = "https://www.kemendag.go.id/berita/perdagangan?page=8"
 
-	go func() (err error) {
-		err = u.crawlerService.Crawling(request.Task, request.SeedURL)
-		if err != nil {
-			u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
-			return
-		}
+	// go func() (err error) {
 
-		return err
-	}()
+	// 	return err
+	// }()
 
+	// if err != nil {
+	// 	u.response.Error(w, r, err, prefixLog, fmt.Sprintf("go routines crawl error."))
+	// 	u.logger.Error(fmt.Sprintf("go routines crawl error."))
+	// 	return
+	// }
+
+	err = u.crawlerService.Crawling(request.SeedURL, request.Task)
 	if err != nil {
-		// u.response.Error(w, r, err, prefixLog, fmt.Sprintf("go routines crawl error."))
-		u.logger.Error(fmt.Sprintf("go routines crawl error."))
+		u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
 		return
 	}
 
@@ -139,6 +140,8 @@ func (u *DefaultController) CrawlpageList(w http.ResponseWriter, r *http.Request
 	param.Page = request.Page
 	param.Count = request.Count
 	param.Search = request.Search
+
+	fmt.Printf("param: %#v\n", param)
 
 	dataList, err = u.crawlerService.CrawlpageList(param)
 	if err != nil {

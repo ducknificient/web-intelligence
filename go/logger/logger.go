@@ -111,9 +111,6 @@ func (l *DefaultLogger) CheckEmptyLog() (err error) {
 	folderList = append(folderList, l.PathCrawlLog)
 	folderList = append(folderList, l.PathCrawlError)
 
-	folderList = append(folderList, "/home/spil/Projects/minicrawler/crawl-log")
-	folderList = append(folderList, "/home/spil/Projects/minicrawler/error-log")
-
 	for _, folderPath := range folderList {
 
 		// Read the directory contents
@@ -151,9 +148,9 @@ func (l *DefaultLogger) CheckEmptyLog() (err error) {
 						return err
 					}
 
-					l.Info(fmt.Sprintf("File %s deleted successfully\n", file.Name()))
+					// l.Info(fmt.Sprintf("File %s deleted successfully\n", file.Name()))
 				} else {
-					l.Info(fmt.Sprintf("File %s is not empty\n", file.Name()))
+					// l.Info(fmt.Sprintf("File %s is not empty\n", file.Name()))
 				}
 			}
 		}

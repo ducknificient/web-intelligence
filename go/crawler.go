@@ -23,10 +23,11 @@ type BasicCrawling struct {
 	IsStop    bool
 }
 
-func NewCrawler(datastore datastore.Datastore) (c *BasicCrawling) {
+func NewCrawler(datastore datastore.Datastore, logger logger.Logger) (c *BasicCrawling) {
 	return &BasicCrawling{
 		Datastore: datastore,
 		IsStop:    false,
+		logger:    logger,
 	}
 
 }
@@ -41,6 +42,7 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 
 	var (
 		errMsg string
+		du     string
 	)
 
 	Q := NewQueue()
@@ -51,9 +53,9 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 		line++
 
 		u := Q.Dequeue() // Get a URL from Q
-		fmt.Printf("%#v. %#v\n", line, u)
+		c.logger.CrawlLog(fmt.Sprintf("%#v. %#v\n", line, u))
 
-		du, err := c.Fetch(u) // Fetch its HTML text
+		fr, err := c.Fetch(u) // Fetch results
 		if err != nil {
 			errMsg = fmt.Sprintf("Unable to fetch. task:{%#v} .seedurl:{%#v} .err: %#v .u: %#v", seedurl, task, err.Error(), u)
 			err = errors.New(errMsg)
@@ -61,8 +63,11 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 			return err
 		}
 
-		if strings.TrimSpace(du) != "" { // If the HTML document is not empty
-			err = c.StoreD(du, u) // Store it in D
+		if fr.Header == `pdf` {
+
+			// store
+
+			err = c.StorePdf(fr.PdfFilename, u, fr.PdfFile) // Store it in D
 			if err != nil {
 				errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} ", seedurl, task, err.Error(), u, du)
 				err = errors.New(errMsg)
@@ -70,33 +75,49 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 				return err
 			}
 
-			L, err := c.ExtractURL(u, du) // Extract all "clean" hrefs from d(u)
-			if err != nil {
-				errMsg = fmt.Sprintf("Unable to extract url. task:{%#v} .seedurl:{%#v} .err: %#v .url:{%#v} .content: {%#v} ", seedurl, task, err.Error(), u, du)
-				err = errors.New(errMsg)
-				c.logger.CrawlError(errMsg)
-				return err
-			}
+		} else if fr.Header == `html` {
 
-			for _, v := range L {
-				c.StoreE(u, v)
+			du = fr.HTMLText
 
-				isContainsD, err := c.ContainsD(v)
+			if strings.TrimSpace(du) != "" { // If the HTML document is not empty
+				err = c.StoreD(du, u) // Store it in D
 				if err != nil {
-					errMsg = fmt.Sprintf("Unable to check ContainsD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} . ", seedurl, task, err.Error(), u)
+					errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} ", seedurl, task, err.Error(), u, du)
 					err = errors.New(errMsg)
 					c.logger.CrawlError(errMsg)
 					return err
 				}
 
-				if !Q.Contains(v) && !isContainsD {
-					// fmt.Printf("enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
-					msg := fmt.Sprintf("enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
-					c.logger.CrawlLog(msg)
-					Q.Enqueue(v)
-				} else {
-					msg := fmt.Sprintf("not enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
-					c.logger.CrawlLog(msg)
+				// check apakah .pdf atau bukan
+
+				L, err := c.ExtractURL(u, du) // Extract all "clean" hrefs from d(u)
+				if err != nil {
+					errMsg = fmt.Sprintf("Unable to extract url. task:{%#v} .seedurl:{%#v} .err: %#v .url:{%#v} .content: {%#v} ", seedurl, task, err.Error(), u, du)
+					err = errors.New(errMsg)
+					c.logger.CrawlError(errMsg)
+					return err
+				}
+
+				for _, v := range L {
+					c.StoreE(u, v)
+
+					isContainsD, err := c.ContainsD(v)
+					if err != nil {
+						errMsg = fmt.Sprintf("Unable to check ContainsD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} . ", seedurl, task, err.Error(), u)
+						err = errors.New(errMsg)
+						c.logger.CrawlError(errMsg)
+						return err
+					}
+
+					if !Q.Contains(v) && !isContainsD {
+						// fmt.Printf("enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
+						msg := fmt.Sprintf("enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
+						c.logger.CrawlLog(msg)
+						Q.Enqueue(v)
+					} else {
+						msg := fmt.Sprintf("not enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
+						c.logger.CrawlLog(msg)
+					}
 				}
 			}
 		}
@@ -149,22 +170,77 @@ func (c *BasicCrawling) TestCrawling() {
 
 }
 
-func (c *BasicCrawling) Fetch(url string) (string, error) {
+func (c *BasicCrawling) Fetch2(url string) (htmltext entity.FetchResult, err error) {
 
 	// Get content from URL
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", err
+		fmt.Println("error http get")
+		return htmltext, err
 	}
 	defer resp.Body.Close()
 
 	// Read HTML content
-	html, err := io.ReadAll(resp.Body)
+	respbody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		fmt.Println("error read all")
+		return htmltext, err
 	}
 
-	return string(html), nil
+	// check apakah pdf atau bukan
+	// if strings.Contains(resp.Header.Get("Content-Type"), "pdf") {
+
+	// 	fetchres.Header = `pdf`
+	// 	fetchres.PdfFile = respbody
+	// 	fetchres.PdfFilename = url
+
+	// } else {
+
+	// 	fetchres.Header = resp.Header.Get("Content-Type")
+	// 	fetchres.HTMLText = string(respbody)
+	// }
+
+	// fetchres.HTMLText = string(respbody)
+
+	htmltext.HTMLText = string(respbody)
+
+	return htmltext, err
+}
+
+func (c *BasicCrawling) Fetch(url string) (fetchres entity.FetchResult, err error) {
+
+	// Get content from URL
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println("error http get")
+		return fetchres, err
+	}
+	defer resp.Body.Close()
+
+	// Read HTML content
+	respbody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("error read all")
+		return fetchres, err
+	}
+
+	// check apakah pdf atau bukan
+	if strings.Contains(resp.Header.Get("Content-Type"), "pdf") {
+
+		fetchres.Header = `pdf`
+		fetchres.PdfFile = respbody
+		fetchres.PdfFilename = url
+
+	} else if strings.Contains(resp.Header.Get("Content-Type"), "html") ||
+		strings.Contains(resp.Header.Get("Content-Type"), "text") {
+
+		fetchres.Header = `html`
+		fetchres.HTMLText = string(respbody)
+	}
+
+	fetchres.HTMLText = string(respbody)
+
+	return fetchres, err
 }
 
 func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs []string, err error) {
@@ -228,10 +304,10 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 			newHref := "https://" + baseHost + href
 
 			if !strings.Contains("/#", newHref) || !strings.Contains("mailto", newHref) {
-				fmt.Printf("exists new: %#v\n", newHref)
+				c.logger.CrawlLog(fmt.Sprintf("exists new: %#v\n", newHref))
 				filteredHrefs = append(filteredHrefs, newHref)
 			} else {
-				fmt.Printf("href: %#v\n", newHref)
+				// fmt.Printf("href: %#v\n", newHref)
 				c.logger.CrawlLog(fmt.Sprintf("%#v. host == 0, href : %#v ,", a, href))
 			}
 
@@ -244,6 +320,16 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 func (c *BasicCrawling) StoreD(pagesource string, link string) (err error) {
 
 	err = c.Datastore.StoreD(pagesource, link, c.Task)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (c *BasicCrawling) StorePdf(filename string, link string, pdf []byte) (err error) {
+
+	err = c.Datastore.StorePdf(filename, link, c.Task, pdf)
 	if err != nil {
 		return err
 	}
@@ -273,7 +359,6 @@ func (c *BasicCrawling) ContainsD(link string) (contains bool, err error) {
 
 func (c *BasicCrawling) CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error) {
 
-	fmt.Println("before crawl page list")
 	fmt.Println(param)
 	// var dataList []entity.CrawlhrefListData
 	dataList, err = c.Datastore.CrawlpageList(param)
