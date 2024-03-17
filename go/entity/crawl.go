@@ -12,6 +12,11 @@ type CrawlingReq struct {
 	SeedURL string `json:"seedurl"`
 }
 
+type CrawlingMultipleReq struct {
+	Task        string   `json:"task"`
+	SeedURLList []string `json:"seedurllist"`
+}
+
 type CrawlingResponse struct {
 }
 
@@ -48,4 +53,41 @@ type CrawlpageListDataRes struct {
 	St   bool                  `json:"st"`
 	Msg  string                `json:"msg"`
 	Data CrawlpageListDataWrap `json:"data"`
+}
+
+type CrawlpageListParsedData struct {
+	Pagesource  string `json:"pagesource"`
+	Link        string `json:"link"`
+	Task        string `json:"task"`
+	Metatitle   string `json:"metatitle"`
+	Metacontent string `json:"metacontent"`
+	Title       string `json:"title"`
+	Date        string `json:"date"`
+	Category    string `json:"category"`
+	TotalView   string `json:"totalview"`
+	Hashtag     string `json:"hashtag"`
+	Content     string `json:"content"`
+	RelatedNews string `json:"relatednews"`
+
+	// rs_document_metatitle   sql.NullString
+	// rs_document_metacontent sql.NullString
+	// rs_document_title       sql.NullString
+	// rs_document_date        sql.NullString
+	// rs_document_category    sql.NullString
+	// rs_document_totalview   sql.NullString
+	// rs_document_hashtag     sql.NullString
+	// rs_document_content     sql.NullString
+	// rs_document_relatednews sql.NullString
+}
+
+type CrawlpageListParsedDataWrap struct {
+	Total int                       `json:"total"`
+	Data  []CrawlpageListParsedData `json:"data"`
+}
+
+type CrawlpageListParsedDataRes struct {
+	Sc   int                         `json:"sc"`
+	St   bool                        `json:"st"`
+	Msg  string                      `json:"msg"`
+	Data CrawlpageListParsedDataWrap `json:"data"`
 }

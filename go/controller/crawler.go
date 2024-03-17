@@ -71,6 +71,67 @@ func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request
 	return
 }
 
+func (u *DefaultController) StartMultipleCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	prefixLog := `StartMultipleCrawling`
+	defer u.response.Panic(w, r)
+
+	b, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableMarshal)
+		return
+	}
+
+	var (
+		request entity.CrawlingMultipleReq
+	)
+
+	err = json.Unmarshal(b, &request)
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableUnmarshal)
+		return
+	}
+
+	var (
+	// seedurl string
+	// task    string
+	)
+
+	// task = `KEMENDAG`
+	// seedurl = "https://www.kemendag.go.id/berita/perdagangan?page=8"
+
+	// go func() (err error) {
+
+	// 	return err
+	// }()
+
+	// if err != nil {
+	// 	u.response.Error(w, r, err, prefixLog, fmt.Sprintf("go routines crawl error."))
+	// 	u.logger.Error(fmt.Sprintf("go routines crawl error."))
+	// 	return
+	// }
+
+	for _, seedurl := range request.SeedURLList {
+
+		// go func() (err error) {
+
+		// 	return err
+		// }()
+
+		fmt.Printf("starting crawl for seedurl: %#v\n", seedurl)
+		err = u.crawlerService.Crawling(seedurl, request.Task)
+		if err != nil {
+			u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
+			return
+		}
+
+		fmt.Println("crawl ended")
+	}
+
+	u.response.Default(w, http.StatusOK, true, "ok")
+	return
+}
+
 func (u *DefaultController) StopCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	prefixLog := `StopCrawling`
 	defer u.response.Panic(w, r)
@@ -145,6 +206,57 @@ func (u *DefaultController) CrawlpageList(w http.ResponseWriter, r *http.Request
 	}
 
 	dataListWrap := entity.CrawlpageListDataWrap{Total: len(dataList), Data: dataList}
+	u.response.CustomResponse(w, r, prefixLog, "ok", dataListWrap)
+	return
+}
+
+func (u *DefaultController) CrawlpageListParsed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	prefixLog := `CrawlpageListParsed`
+	defer u.response.Panic(w, r)
+
+	b, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableMarshal)
+		return
+	}
+
+	var (
+		request entity.CrawlpageListReq
+	)
+
+	err = json.Unmarshal(b, &request)
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableUnmarshal)
+		return
+	}
+
+	var (
+	// seedurl string
+	// task    string
+	)
+
+	// task = `KEMENDAG`
+	// seedurl = "https://www.kemendag.go.id/berita/perdagangan?page=8"
+
+	var (
+		param    entity.CrawlpageListParam
+		dataList []entity.CrawlpageListParsedData
+	)
+
+	param.Page = request.Page
+	param.Count = request.Count
+	param.Search = request.Search
+
+	fmt.Printf("param: %#v\n", param)
+
+	dataList, err = u.crawlerService.CrawlpageListParsed(param)
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, "Unable to get crawlpage list.")
+		return
+	}
+
+	dataListWrap := entity.CrawlpageListParsedDataWrap{Total: len(dataList), Data: dataList}
 	u.response.CustomResponse(w, r, prefixLog, "ok", dataListWrap)
 	return
 }

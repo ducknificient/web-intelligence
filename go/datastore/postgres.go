@@ -63,13 +63,13 @@ func (db *PostgresDB) Connect() (err error) {
 	return err
 }
 
-func (db *PostgresDB) StoreD(pagesource string, link string, task string) (err error) {
+func (db *PostgresDB) StoreD(pagesource string, link string, task string, documenttype string, mimetype string) (err error) {
 
 	// Prepare SQL statement to insert data
-	sqlStatement := `INSERT INTO webintelligence.crawlpage (pagesource, link, task) VALUES ($1, $2, $3)`
-	_, err = db.Conn.Exec(db.Ctx, sqlStatement, pagesource, link, task)
+	sqlStatement := `INSERT INTO webintelligence.crawlpage (pagesource, link, task, documenttype, mimetype) VALUES ($1, $2, $3, $4, $5)`
+	_, err = db.Conn.Exec(db.Ctx, sqlStatement, pagesource, link, task, documenttype, mimetype)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to insert into webintelligence.crawlpage. q: %v, param: %v,%v,%v . err: %#v", sqlStatement, pagesource, link, task, err.Error())
+		errMsg := fmt.Sprintf("Unable to insert into webintelligence.crawlpage. q: %v, param: %v,%v,%v,%v,%v . err: %#v", sqlStatement, pagesource, link, task, documenttype, mimetype, err.Error())
 		err = errors.New(errMsg)
 		return err
 	}

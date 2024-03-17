@@ -21,11 +21,12 @@ type CrawlerService interface {
 	StartCrawling() (err error)
 	StopCrawling() (err error)
 	CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error)
+	CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error)
 }
 
 type BasicCrawling struct {
-	logger    logger.Logger
-	SeedURL   string
+	logger logger.Logger
+	// SeedURL   string
 	Task      string
 	Datastore datastore.Datastore
 	IsStop    bool
@@ -55,7 +56,7 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 	)
 
 	c.Task = task
-	c.SeedURL = seedurl
+	// c.SeedURL = seedurl
 
 	// existingQueue, err := c.GetExistingQueue()
 	// if err != nil {
@@ -73,7 +74,7 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 
 	Q = NewQueue()
 
-	Q.Enqueue(c.SeedURL)
+	Q.Enqueue(seedurl)
 
 	line := 0
 	for !Q.IsEmpty() {
@@ -100,7 +101,7 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 		case "html":
 			du = string(fr.DocumentFile)
 			if strings.TrimSpace(du) != "" { // If the HTML document is not empty
-				err = c.StoreD(du, u) // Store it in D
+				err = c.StoreD(du, u, fr) // Store it in D
 				if err != nil {
 					errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} \n", seedurl, task, err.Error(), u, du)
 					err = errors.New(errMsg)
@@ -376,9 +377,9 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 	return filteredHrefs, err
 }
 
-func (c *BasicCrawling) StoreD(pagesource string, link string) (err error) {
+func (c *BasicCrawling) StoreD(pagesource string, link string, fr entity.FetchResult) (err error) {
 
-	err = c.Datastore.StoreD(pagesource, link, c.Task)
+	err = c.Datastore.StoreD(pagesource, link, c.Task, fr.DocumentType, fr.DocumentContentType)
 	if err != nil {
 		return err
 	}
@@ -428,6 +429,18 @@ func (c *BasicCrawling) CrawlpageList(param entity.CrawlpageListParam) (dataList
 	return dataList, err
 }
 
+func (c *BasicCrawling) CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error) {
+
+	fmt.Println(param)
+	// var dataList []entity.CrawlhrefListData
+	dataList, err = c.Datastore.CrawlpageListParsed(param)
+	if err != nil {
+		return dataList, err
+	}
+
+	return dataList, err
+}
+
 func (c *BasicCrawling) GetExistingQueue() (queue []string, err error) {
 
 	queue, err = c.Datastore.GetExistingQueue(c.Task)
@@ -438,15 +451,15 @@ func (c *BasicCrawling) GetExistingQueue() (queue []string, err error) {
 	return queue, err
 }
 
-func (c *BasicCrawling) GetLatestSeedUrl() (err error) {
+func (c *BasicCrawling) GetLatestSeedUrl(param_seedurl string) (seedurl string, err error) {
 
-	var seedurl string
-	seedurl, err = c.Datastore.GetLatestSeedUrl(c.Task, c.SeedURL)
+	// var seedurl string
+	seedurl, err = c.Datastore.GetLatestSeedUrl(c.Task, param_seedurl)
 	if err != nil {
-		return err
+		return param_seedurl, err
 	}
 
-	c.SeedURL = seedurl
+	// c.SeedURL = seedurl
 
-	return err
+	return seedurl, err
 }

@@ -16,8 +16,10 @@ type Controller interface {
 	ServeFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 	DatabasePing(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 	StartCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
+	StartMultipleCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 	StopCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 	CrawlpageList(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
+	CrawlpageListParsed(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 }
 
 type DefaultController struct {
