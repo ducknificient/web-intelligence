@@ -68,16 +68,6 @@ type CrawlpageListParsedData struct {
 	Hashtag     string `json:"hashtag"`
 	Content     string `json:"content"`
 	RelatedNews string `json:"relatednews"`
-
-	// rs_document_metatitle   sql.NullString
-	// rs_document_metacontent sql.NullString
-	// rs_document_title       sql.NullString
-	// rs_document_date        sql.NullString
-	// rs_document_category    sql.NullString
-	// rs_document_totalview   sql.NullString
-	// rs_document_hashtag     sql.NullString
-	// rs_document_content     sql.NullString
-	// rs_document_relatednews sql.NullString
 }
 
 type CrawlpageListParsedDataWrap struct {

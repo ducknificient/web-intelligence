@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ducknificient/web-intelligence/go/config"
 	"github.com/ducknificient/web-intelligence/go/datastore"
 	"github.com/ducknificient/web-intelligence/go/entity"
 	"github.com/ducknificient/web-intelligence/go/logger"
@@ -25,6 +26,7 @@ type CrawlerService interface {
 }
 
 type BasicCrawling struct {
+	config config.Configuration
 	logger logger.Logger
 	// SeedURL   string
 	Task      string
@@ -32,11 +34,12 @@ type BasicCrawling struct {
 	IsStop    bool
 }
 
-func NewCrawler(datastore datastore.Datastore, logger logger.Logger) (c *BasicCrawling) {
+func NewCrawler(config config.Configuration, logger logger.Logger, datastore datastore.Datastore) (c *BasicCrawling) {
 	return &BasicCrawling{
+		config:    config,
+		logger:    logger,
 		Datastore: datastore,
 		IsStop:    false,
-		logger:    logger,
 	}
 
 }

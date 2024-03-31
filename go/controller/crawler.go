@@ -9,14 +9,13 @@ import (
 	"github.com/ducknificient/web-intelligence/go/entity"
 	"github.com/ducknificient/web-intelligence/go/general"
 	"github.com/ducknificient/web-intelligence/go/service"
-	"github.com/julienschmidt/httprouter"
 )
 
 func (c *DefaultController) NewCrawlerService(service service.CrawlerService) {
 	c.crawlerService = service
 }
 
-func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request) {
 	prefixLog := `StartCrawling`
 	defer u.response.Panic(w, r)
 
@@ -71,7 +70,7 @@ func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request
 	return
 }
 
-func (u *DefaultController) StartMultipleCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (u *DefaultController) StartMultipleCrawling(w http.ResponseWriter, r *http.Request) {
 	prefixLog := `StartMultipleCrawling`
 	defer u.response.Panic(w, r)
 
@@ -132,7 +131,7 @@ func (u *DefaultController) StartMultipleCrawling(w http.ResponseWriter, r *http
 	return
 }
 
-func (u *DefaultController) StopCrawling(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (u *DefaultController) StopCrawling(w http.ResponseWriter, r *http.Request) {
 	prefixLog := `StopCrawling`
 	defer u.response.Panic(w, r)
 
@@ -159,7 +158,7 @@ func (u *DefaultController) StopCrawling(w http.ResponseWriter, r *http.Request,
 	return
 }
 
-func (u *DefaultController) CrawlpageList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (u *DefaultController) CrawlpageList(w http.ResponseWriter, r *http.Request) {
 	prefixLog := `CrawlpageList`
 	defer u.response.Panic(w, r)
 
@@ -210,7 +209,7 @@ func (u *DefaultController) CrawlpageList(w http.ResponseWriter, r *http.Request
 	return
 }
 
-func (u *DefaultController) CrawlpageListParsed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (u *DefaultController) CrawlpageListParsed(w http.ResponseWriter, r *http.Request) {
 	prefixLog := `CrawlpageListParsed`
 	defer u.response.Panic(w, r)
 

@@ -2,23 +2,14 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 )
 
-var (
-	Conf Configuration
-)
-
-// type DbInfo struct {
-// 	Host        *string `json:"host"` // server ip
-// 	DbName      *string `json:"dbname"`
-// 	Username    *string `json:"username"`
-// 	Password    *string `json:"password"`
-// 	Port        *string `json:"port"`
-// 	SSLMode     *string `json:"sslmode"`
-// 	PoolMaxConn *string `json:"poolmaxconn"`
-// }
+type Configuration interface {
+	GetConfiguration() (config *AppConfiguration)
+}
 
 type PgInfo struct {
 	Host        *string `json:"host"` // server ip
@@ -30,7 +21,7 @@ type PgInfo struct {
 	PoolMaxConn *string `json:"poolmaxconn"`
 }
 
-type Configuration struct {
+type AppConfiguration struct {
 	// app configuration
 	Appname    *string `json:"appname"`
 	AppDomain  *string `json:"appdomain"`
@@ -66,46 +57,30 @@ type Configuration struct {
 	UserHeader  *string `json:"userheader"`
 }
 
-func NewConfiguration(environment string) (config Configuration) {
-
-	var (
-		filename      string
-		environmentOK bool = true
-	)
-
-	switch environment {
-	case "dev":
-		filename = "config/config-dev.json"
-	case "prod-test":
-		filename = "config/config-prod-test.json"
-	case "prod-api6":
-		filename = "config/config-prod-api6.json"
-	case "prod-nanika":
-		filename = "config/config-prod-nanika.json"
-	default:
-		filename = "config/config.json"
-		environmentOK = false
-	}
-
-	if !environmentOK {
-		panic("Unable to find suitable environment")
-	}
+func NewConfiguration(filename string) (config *AppConfiguration, err error) {
 
 	jsonFile, err := os.Open(filename)
 	if err != nil {
-		panic("Unable to load config.json :" + err.Error())
+		err = fmt.Errorf("Unable to load config.json :" + err.Error())
+		return config, err
 	}
 	defer jsonFile.Close()
 
 	byteData, err := io.ReadAll(jsonFile)
 	if err != nil {
-		panic("Unable to read jsonFile :" + err.Error())
+		err = fmt.Errorf("Unable to read jsonFile :" + err.Error())
+		return config, err
 	}
 
 	err = json.Unmarshal(byteData, &config)
 	if err != nil {
-		panic("Unable to unmarshall jsonFile -> byteData :" + err.Error())
+		err = fmt.Errorf("Unable to unmarshall jsonFile -> byteData :" + err.Error())
+		return config, err
 	}
 
-	return config
+	return config, err
+}
+
+func (c *AppConfiguration) GetConfiguration() (config *AppConfiguration) {
+	return c
 }

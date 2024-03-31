@@ -9,7 +9,7 @@ import (
 	"github.com/ducknificient/web-intelligence/go/entity"
 )
 
-func (db *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error) {
+func (d *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error) {
 	prefixLog := `CrawlpageList`
 	var (
 		errMsg string
@@ -40,7 +40,7 @@ func (db *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList [
 	WHERE
 		du ilike $3
 	LIMIT $1 OFFSET $2`
-	row := db.Conn.QueryRow(db.Ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
+	row := d.conn.QueryRow(d.ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
 	var count int
 	err = row.Scan(&count)
 	if err != nil {
@@ -63,8 +63,8 @@ func (db *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList [
 	ORDER BY cp.created DESC
 	LIMIT $1 OFFSET $2`
 
-	db.Logger.Info(sqlStatement)
-	rows, err := db.Conn.Query(db.Ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
+	d.logger.Info(sqlStatement)
+	rows, err := d.conn.Query(d.ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
 	if err != nil {
 		errMsg = fmt.Sprintf("Unable to select from webintelligence.crawlpage. q: %v. param: %v,%v,%v .err: %#v", sqlStatement, limit, offset, `%`+param.Search+`%`, err.Error())
 		err = errors.New(errMsg)
@@ -104,7 +104,7 @@ func (db *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList [
 	return dataList, err
 }
 
-func (db *PostgresDB) CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error) {
+func (d *PostgresDB) CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error) {
 	prefixLog := `CrawlpageList`
 	var (
 		errMsg string
@@ -136,7 +136,7 @@ func (db *PostgresDB) CrawlpageListParsed(param entity.CrawlpageListParam) (data
 	AND link LIKE '%/berita/%'
 	AND cp.pagesource like $3
 	LIMIT $1 OFFSET $2`
-	row := db.Conn.QueryRow(db.Ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
+	row := d.conn.QueryRow(d.ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
 	var count int
 	err = row.Scan(&count)
 	if err != nil {
@@ -212,8 +212,8 @@ func (db *PostgresDB) CrawlpageListParsed(param entity.CrawlpageListParam) (data
 	LIMIT $1 OFFSET $2
 	`
 
-	db.Logger.Info(sqlStatement)
-	rows, err := db.Conn.Query(db.Ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
+	d.logger.Info(sqlStatement)
+	rows, err := d.conn.Query(d.ctx, sqlStatement, limit, offset, `%`+param.Search+`%`)
 	if err != nil {
 		errMsg = fmt.Sprintf("Unable to select from webintelligence.crawlpage. q: %v. param: %v,%v,%v .err: %#v", sqlStatement, limit, offset, `%`+param.Search+`%`, err.Error())
 		err = errors.New(errMsg)
@@ -284,7 +284,7 @@ func (db *PostgresDB) CrawlpageListParsed(param entity.CrawlpageListParam) (data
 	return dataList, err
 }
 
-func (db *PostgresDB) GetLatestSeedUrl(task string, seedurl string) (latest_seedurl string, err error) {
+func (d *PostgresDB) GetLatestSeedUrl(task string, seedurl string) (latest_seedurl string, err error) {
 
 	latest_seedurl = seedurl
 
@@ -294,7 +294,7 @@ func (db *PostgresDB) GetLatestSeedUrl(task string, seedurl string) (latest_seed
 	sqlStatement = `SELECT 
 		COUNT(*) 
 	FROM webintelligence.crawlhref WHERE task = $1`
-	row := db.Conn.QueryRow(db.Ctx, sqlStatement, task)
+	row := d.conn.QueryRow(d.ctx, sqlStatement, task)
 	var count int
 	err = row.Scan(&count)
 	if err != nil {
@@ -310,7 +310,7 @@ func (db *PostgresDB) GetLatestSeedUrl(task string, seedurl string) (latest_seed
 		WHERE task = $1
 		order by ch.created desc 
 		limit 1`
-		row := db.Conn.QueryRow(db.Ctx, sqlStatement, task)
+		row := d.conn.QueryRow(d.ctx, sqlStatement, task)
 		err = row.Scan(&rs_latest_seedurl)
 		if err != nil {
 			return seedurl, err
@@ -322,7 +322,7 @@ func (db *PostgresDB) GetLatestSeedUrl(task string, seedurl string) (latest_seed
 	return latest_seedurl, err
 }
 
-func (db *PostgresDB) GetExistingQueue(task string) (dataList []string, err error) {
+func (d *PostgresDB) GetExistingQueue(task string) (dataList []string, err error) {
 
 	prefixLog := `CrawlpageList`
 	var (
@@ -345,7 +345,7 @@ func (db *PostgresDB) GetExistingQueue(task string) (dataList []string, err erro
 		GROUP BY ch.href
 		ORDER BY timestamp ASC
 	)`
-	row := db.Conn.QueryRow(db.Ctx, sqlStatement, task)
+	row := d.conn.QueryRow(d.ctx, sqlStatement, task)
 	var count int
 	err = row.Scan(&count)
 	if err != nil {
@@ -372,8 +372,8 @@ func (db *PostgresDB) GetExistingQueue(task string) (dataList []string, err erro
 	GROUP BY ch.href
 	ORDER BY timestamp ASC`
 
-	db.Logger.Info(sqlStatement)
-	rows, err := db.Conn.Query(db.Ctx, sqlStatement, task)
+	d.logger.Info(sqlStatement)
+	rows, err := d.conn.Query(d.ctx, sqlStatement, task)
 	if err != nil {
 		errMsg = fmt.Sprintf("Unable to select from webintelligence.crawlpage. q: %v. param: %v .err: %#v", sqlStatement, task, err.Error())
 		err = errors.New(errMsg)

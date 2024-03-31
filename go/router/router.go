@@ -1,57 +1,40 @@
 package router
 
 import (
-	"net/http"
-
+	"github.com/ducknificient/web-intelligence/go/config"
 	"github.com/ducknificient/web-intelligence/go/controller"
 	"github.com/julienschmidt/httprouter"
 )
 
-type Router interface {
-	GetHandler() (handler http.Handler)
-}
-
 type DefaultRouter struct {
-	Router     *httprouter.Router
-	Controller controller.Controller
+	Router *httprouter.Router
 }
 
-func NewDefaultRouter(controller controller.Controller) *DefaultRouter {
-	return &DefaultRouter{
-		Controller: controller,
-	}
-}
+func NewRouter(controller controller.HTTPController, middleware Middleware, config config.Configuration) *DefaultRouter {
 
-func (s *DefaultRouter) SetRouter(router *httprouter.Router) {
-	s.Router = router
-}
+	router := httprouter.New()
 
-func (s *DefaultRouter) SetResponse(router *httprouter.Router) {
-
-}
-
-func (s *DefaultRouter) GetHandler() http.Handler {
-
-	router := s.Router
-	defaultController := s.Controller
+	router.HandlerFunc("POST", "/path", controller.Options)
 
 	/* ALL */
-	router.GET("/", defaultController.Root)
+	router.GET("/", httprouter.WrapF(controller.Root))
 	// router.Use(middleware.EnableCors)
 
-	router.OPTIONS("/*path", defaultController.Options)
-	router.GET("/serve/:path/:identifier/:file", defaultController.ServeFile)
+	router.OPTIONS("/*path", httprouter.WrapF(controller.Options))
+	router.GET("/serve/:path/:identifier/:file", httprouter.WrapF(controller.ServeFile))
 
 	/* DEFAULT */
-	router.GET("/about/version", defaultController.About)
-	router.POST("/database/ping", defaultController.DatabasePing)
+	router.GET("/about/version", httprouter.WrapF(controller.About))
+	router.POST("/database/ping", httprouter.WrapF(controller.DatabasePing))
 
 	/* BUSINESS LOGIC */
-	router.POST("/crawl/start", defaultController.StartCrawling)
-	router.POST("/crawl/start/multiple", defaultController.StartMultipleCrawling)
-	router.POST("/crawl/stop", defaultController.StopCrawling)
-	router.POST("/crawl/list", defaultController.CrawlpageList)
-	router.POST("/crawl/list/parsed", defaultController.CrawlpageListParsed)
+	router.POST("/crawl/start", httprouter.WrapF(controller.StartCrawling))
+	router.POST("/crawl/start/multiple", httprouter.WrapF(controller.StartMultipleCrawling))
+	router.POST("/crawl/stop", httprouter.WrapF(controller.StopCrawling))
+	router.POST("/crawl/list", httprouter.WrapF(controller.CrawlpageList))
+	router.POST("/crawl/list/parsed", httprouter.WrapF(controller.CrawlpageListParsed))
 
-	return router
+	return &DefaultRouter{
+		Router: router,
+	}
 }

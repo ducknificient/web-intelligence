@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ducknificient/web-intelligence/go/config"
+	configpackage "github.com/ducknificient/web-intelligence/go/config"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -23,14 +23,10 @@ type Logger interface {
 }
 
 type DefaultLogger struct {
-	Logger *zap.Logger
-
-	PathCrawlLog   string
-	PathCrawlError string
-	PathCrawlPdf   string
-
-	CrawlLogFile   *os.File
-	CrawlErrorFile *os.File
+	config         configpackage.Configuration
+	logger         *zap.Logger
+	crawlLogFile   *os.File
+	crawlErrorFile *os.File
 }
 
 func SyslogTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
@@ -41,22 +37,27 @@ func MyCaller(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(filepath.Base(caller.FullPath()))
 }
 
-func NewLogger() (defaultlogger *DefaultLogger, err error) {
+func NewLogger(config configpackage.Configuration) (logger *DefaultLogger, err error) {
+
+	appconfig := config.GetConfiguration()
 
 	//check log folder is exist
-	if _, err := os.Stat(*config.Conf.PathLog); os.IsNotExist(err) {
-		return defaultlogger, err
+	if _, err := os.Stat(*appconfig.PathLog); os.IsNotExist(err) {
+		err := os.MkdirAll(*appconfig.PathLog, 0744)
+		if err != nil {
+			return logger, err
+		}
 	}
 
 	//create log file and setting rotate time (24 hours)
 	// logFile := _pathlog + _filesep + "app-%Y-%m-%d-%H.log"
-	logFile := *config.Conf.PathLog + *config.Conf.FileSep + "app-%Y-%m-%d.log"
+	logFile := *appconfig.PathLog + *appconfig.FileSep + "app-%Y-%m-%d.log"
 	rotator, err := rotatelogs.New(
 		logFile,
 		rotatelogs.WithMaxAge(45*24*time.Hour),
 		rotatelogs.WithRotationTime(24*time.Hour))
 	if err != nil {
-		return defaultlogger, err
+		return logger, err
 	}
 
 	// initialize the JSON encoding config
@@ -72,7 +73,7 @@ func NewLogger() (defaultlogger *DefaultLogger, err error) {
 
 	var encCfg zapcore.EncoderConfig
 	if err := json.Unmarshal(data, &encCfg); err != nil {
-		return defaultlogger, err
+		return logger, err
 	}
 	encCfg.EncodeTime = SyslogTimeEncoder
 	encCfg.EncodeCaller = MyCaller
@@ -85,31 +86,48 @@ func NewLogger() (defaultlogger *DefaultLogger, err error) {
 		zap.InfoLevel)
 	zap.New(core)
 
-	defaultlogger = &DefaultLogger{
-		Logger: zap.New(core, zap.WithCaller(true), zap.AddStacktrace(zap.ErrorLevel)),
+	logger = &DefaultLogger{
+		config: config,
+		logger: zap.New(core, zap.WithCaller(true), zap.AddStacktrace(zap.ErrorLevel)),
 	}
 
-	return defaultlogger, nil
+	return logger, nil
 }
 
 func (l *DefaultLogger) Info(msg string) {
-	l.Logger.Info(msg)
+	l.logger.Info(msg)
 }
 
 func (l *DefaultLogger) Error(msg string) {
-	l.Logger.Error(msg)
+	l.logger.Error(msg)
 }
 
 func (l *DefaultLogger) Fatal(msg string) {
-	l.Logger.Fatal(msg)
+	l.logger.Fatal(msg)
 }
 
 func (l *DefaultLogger) CheckEmptyLog() (err error) {
 
 	folderList := make([]string, 0)
 
-	folderList = append(folderList, l.PathCrawlLog)
-	folderList = append(folderList, l.PathCrawlError)
+	//check log folder is exist
+	if _, err := os.Stat(*l.config.GetConfiguration().PathCrawlLog); os.IsNotExist(err) {
+		err := os.MkdirAll(*l.config.GetConfiguration().PathCrawlLog, 0744)
+		if err != nil {
+			return err
+		}
+	}
+
+	//check log folder is exist
+	if _, err := os.Stat(*l.config.GetConfiguration().PathCrawlError); os.IsNotExist(err) {
+		err := os.MkdirAll(*l.config.GetConfiguration().PathCrawlError, 0744)
+		if err != nil {
+			return err
+		}
+	}
+
+	folderList = append(folderList, *l.config.GetConfiguration().PathCrawlLog)
+	folderList = append(folderList, *l.config.GetConfiguration().PathCrawlError)
 
 	for _, folderPath := range folderList {
 
@@ -164,33 +182,40 @@ func (l *DefaultLogger) SetupCrawlLogFile() (err error) {
 	// currentTime := time.Now().Format("2006-01-02_15-04-05")
 	currentTime := time.Now().Format("2006-01-02_15")
 
-	filename := l.PathCrawlLog + *config.Conf.FileSep + currentTime + "_" + "crawl_log"
+	pathcrawllog := *l.config.GetConfiguration().PathCrawlLog
+	filesep := *l.config.GetConfiguration().FileSep
+
+	// filename := l.PathCrawlLog + *config.Conf.FileSep + currentTime + "_" + "crawl_log"
+	filename := pathcrawllog + filesep + currentTime + "_" + "crawl_log"
+
+	// filename := l.PathCrawlLog + *config.Conf.FileSep + currentTime + "_" + "crawl_log"
 
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
 
-	l.CrawlLogFile = file
+	l.crawlLogFile = file
 
-	error_filename := l.PathCrawlError + *config.Conf.FileSep + currentTime + `_` + `error_log`
+	pathcrawlerror := *l.config.GetConfiguration().PathCrawlError
+	error_filename := pathcrawlerror + filesep + currentTime + `_` + `error_log`
 
 	error_file, err := os.OpenFile(error_filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
-	l.CrawlErrorFile = error_file
+	l.crawlErrorFile = error_file
 
 	return err
 
 }
 
 func (l *DefaultLogger) CrawlLog(msg string) {
-	fmt.Fprintf(l.CrawlLogFile, "%v", msg)
+	fmt.Fprintf(l.crawlLogFile, "%v", msg)
 }
 
 func (l *DefaultLogger) CrawlError(msg string) {
-	fmt.Fprintf(l.CrawlErrorFile, "%v", msg)
+	fmt.Fprintf(l.crawlErrorFile, "%v", msg)
 }
 
 func combine() {

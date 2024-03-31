@@ -3,142 +3,152 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/ducknificient/web-intelligence/go/config"
-	"github.com/ducknificient/web-intelligence/go/controller"
+	configpackage "github.com/ducknificient/web-intelligence/go/config"
+	controllerpackage "github.com/ducknificient/web-intelligence/go/controller"
 	"github.com/ducknificient/web-intelligence/go/datastore"
-	"github.com/ducknificient/web-intelligence/go/logger"
-	"github.com/ducknificient/web-intelligence/go/router"
+	loggerpackage "github.com/ducknificient/web-intelligence/go/logger"
+	routerpackage "github.com/ducknificient/web-intelligence/go/router"
 	"github.com/ducknificient/web-intelligence/go/service"
-	"github.com/julienschmidt/httprouter"
+
+	serverpackage "github.com/ducknificient/web-intelligence/go/server"
 )
 
-/*initialization config file*/
+var (
+	configPath string
+	config     *configpackage.AppConfiguration
+	err        error
+)
+
 func init() {
-	config.Conf = config.NewConfiguration("dev")
+
+	// reading from command line
+	var args = os.Args
+	configPath = args[1]
+
+	// config file path
+	config, err = configpackage.NewConfiguration(configPath)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
 
-	// setup context
+	/*
+		SETUP CONTEXT
+	*/
+	// https://dasarpemrogramangolang.novalagung.com/A-pipeline-context-cancellation.html
 	var (
 		ctx = context.Background()
 		err error
 	)
 
-	// setup logger
-	default_logger, err := logger.NewLogger()
+	/*
+		SETUP LOGGER
+	*/
+
+	// create logger
+	logger, err := loggerpackage.NewLogger(config)
+	if err != nil {
+		// logger.Error(fmt.Sprintf("unable to init logger : %v", err.Error()))
+		panic(err.Error())
+	}
+
+	err = logger.CheckEmptyLog()
 	if err != nil {
 		panic(err)
 	}
 
-	default_logger.PathCrawlLog = *config.Conf.PathCrawlLog
-	default_logger.PathCrawlError = *config.Conf.PathCrawlError
-	default_logger.PathCrawlPdf = *config.Conf.PathCrawlPdf
-
-	err = default_logger.CheckEmptyLog()
+	err = logger.SetupCrawlLogFile()
 	if err != nil {
 		panic(err)
 	}
 
-	err = default_logger.SetupCrawlLogFile()
+	/*
+		SETUP DATASTORE IMPLEMENTATION
+
+		// MODEL / REPOSITORY / DAO
+	*/
+
+	mapPgDB, err := datastore.NewPostgresModelList(ctx, config, logger)
 	if err != nil {
-		panic(err)
+		logger.Error(fmt.Sprintf("unable to make new postgres model : %v", err.Error()))
+		panic(err.Error())
 	}
 
-	// postgresDB := datastore.NewPostgreSQLDB(ctx, default_logger)
-	// err = postgresDB.Connect()
-	// if err != nil {
-	// 	default_logger.Error(fmt.Sprintf("unable to connect : %v", err.Error()))
-	// 	panic(err.Error())
-	// }
+	postgresDB := mapPgDB[*config.SelectedPgDB]
 
-	listPgDatabase := datastore.GetListPgDatabase(default_logger)
-	mapDB := make(map[string]datastore.Datastore)
+	/*
+		SETUP SERVICE
+	*/
 
-	for _, postgresDB := range listPgDatabase {
+	crawler := service.NewCrawler(config, logger, postgresDB)
 
-		postgresDB.Ctx = ctx
-		err := postgresDB.Connect()
-		if err != nil {
-			default_logger.Error(fmt.Sprintf("unable to connect : %v", err.Error()))
-			panic(err.Error())
-		}
+	/*
+		SETUP CONTROLLER
+	*/
 
-		err = postgresDB.Conn.Ping(ctx)
-		if err != nil {
-			panic(err.Error())
-		}
+	// init controller response
+	httpresponse := controllerpackage.NewHTTPResponse(logger)
 
-		mapDB[*postgresDB.PgInfo.DbName] = &postgresDB
+	// init default http controller
+	handler := controllerpackage.NewHTTPController(config, logger, httpresponse)
 
-	}
+	// inject service to handler
+	handler.NewCrawlerService(crawler)
 
-	postgresDB := mapDB[*config.Conf.SelectedPgDB]
+	/*
+		SETUP ROUTER
+	*/
 
-	// 6. setup model (repository)
-	// postgresDB := &datastore.PostgresDB{
-	// 	Ctx:        ctx,
-	// 	Pool:       postgrespool.Conn,
-	// 	BackupPool: postgrespool.Conn,
-	// 	VectorPool: pgvectorpool.Conn,
-	// }
+	// init middleware
+	middleware := routerpackage.NewMiddleware(config, logger, httpresponse)
 
-	crawler := service.NewCrawler(postgresDB, default_logger)
+	// init router
+	httprouter := routerpackage.NewRouter(handler, middleware, config)
 
-	// init controller
+	/*
+		SETUP SERVER
+	*/
 
-	default_controller := controller.NewDefaultController(default_logger)
-	default_controller.NewCrawlerService(crawler)
+	// init http server
+	appIp := *config.AppIP + ":" + *config.AppPort
+	httpserver := serverpackage.NewHTTPServer(&http.Server{
+		Addr:    appIp,
+		Handler: httprouter.Router,
+	}, logger)
 
-	// init schmith router
+	// run server
+	httpserver.Run()
 
-	default_router := httprouter.New()
-
-	handler_router := router.NewDefaultRouter(default_controller)
-	handler_router.SetRouter(default_router)
-
-	// ipPort := ":" + "8090"
-	// fmt.Println("App listening on " + ipPort)
-	appIp := *config.Conf.AppIP + ":" + *config.Conf.AppPort
-	server := &http.Server{Addr: appIp, Handler: handler_router.GetHandler()}
-
-	go func() {
-		default_logger.Info("App listening on " + server.Addr)
-		if err := server.ListenAndServe(); err != nil {
-			panic(err)
-		}
-	}()
-
-	// 11. Graceful shutdownra
+	/*
+		Graceful shutdown
+	*/
 
 	// Wait for kill signal of channel
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	// fmt.Println("before quit")
+
 	// This blocks until a signal is passed into the quit channel
 	<-quit
-	// fmt.Println("after quit")
 	// The context is used to inform the server it has 5 seconds to finish
 	// the request it is currently handling
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	// Shutdown server
-	log.Println("Shutting down server...")
-	// default_logger.Info("Shutting down server...")
-	// err = server.Close()
-	// if err != nil {
-	// 	//log.Fatalf("Server forced to shutdown: %v\n", err)
-	// 	default_logger.Error(fmt.Sprintf("Server forced to shutdown : %v\n", err.Error()))
-	// 	// logger.Fatal(fmt.Sprintf("Server forced to shutdown : %v\n", err.Error()))
-	// }
+	logger.Info("Shutting down server...")
+	err = httpserver.Shutdown(ctx)
+	if err != nil {
+		// fmt.Errorf(fmt.Sprintf("Server forced to shutdown : %v\n", err.Error()))
+		logger.Fatal(fmt.Sprintf("Server forced to shutdown : %v\n", err.Error()))
+	}
 }
 
 /*
