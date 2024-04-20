@@ -11,4 +11,5 @@ type Datastore interface {
 	GetLatestSeedUrl(task string, seedurl string) (res_seedurl string, err error)
 	CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error)
 	CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error)
+	CheckUrlIsExist(link string) (isexist bool, err error)
 }

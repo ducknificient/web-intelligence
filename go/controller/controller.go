@@ -3,9 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"github.com/ducknificient/web-intelligence/go/config"
 	configpackage "github.com/ducknificient/web-intelligence/go/config"
-	"github.com/ducknificient/web-intelligence/go/logger"
 	loggerpackage "github.com/ducknificient/web-intelligence/go/logger"
 	"github.com/ducknificient/web-intelligence/go/service"
 )
@@ -21,14 +19,17 @@ type HTTPController interface {
 	StopCrawling(w http.ResponseWriter, r *http.Request)
 	CrawlpageList(w http.ResponseWriter, r *http.Request)
 	CrawlpageListParsed(w http.ResponseWriter, r *http.Request)
+	AlodokterCrawler(w http.ResponseWriter, r *http.Request)
+	AlodokterCheckUrl(w http.ResponseWriter, r *http.Request)
 }
 
 type DefaultController struct {
-	config         config.Configuration
-	logger         logger.Logger
-	response       HTTPResponse
-	crawlerService service.CrawlerService
-	crawlStop      bool
+	config           configpackage.Configuration
+	logger           loggerpackage.Logger
+	response         HTTPResponse
+	crawlerService   service.CrawlerService
+	alodokterService service.AlodokterCrawlerService
+	crawlStop        bool
 }
 
 // func NewDefaultController(logger logger.Logger) (default_controller *DefaultController) {

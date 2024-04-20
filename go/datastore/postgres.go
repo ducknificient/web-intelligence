@@ -171,3 +171,22 @@ func (d *PostgresDB) ContainsD(link string) (contains bool, err error) {
 
 	return false, err
 }
+
+func (d *PostgresDB) CheckUrlIsExist(link string) (contains bool, err error) {
+
+	// Prepare SQL statement to check if data exists in tableD
+	row := d.conn.QueryRow(d.ctx, "SELECT COUNT(*) FROM webintelligence.crawlpage WHERE link = $1", link)
+	var count int
+	err = row.Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	// If count > 0, data exists in tableD
+	if count > 0 {
+		return true, nil
+	}
+
+	return false, err
+
+}

@@ -34,6 +34,10 @@ func NewRouter(controller controller.HTTPController, middleware Middleware, conf
 	router.POST("/crawl/list", httprouter.WrapF(controller.CrawlpageList))
 	router.POST("/crawl/list/parsed", httprouter.WrapF(controller.CrawlpageListParsed))
 
+	router.POST("/alodokter/crawler", httprouter.WrapF(controller.AlodokterCrawler))
+
+	router.POST("/alodokter/checkurl", httprouter.WrapF(controller.AlodokterCheckUrl))
+
 	return &DefaultRouter{
 		Router: router,
 	}
