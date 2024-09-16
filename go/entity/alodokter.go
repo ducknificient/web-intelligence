@@ -39,3 +39,18 @@ type AlodokterValidation struct {
 	Url     string `json:"url"`
 	IsExist bool   `json:"isexist"`
 }
+
+type AlodokterListDataParsedParam struct {
+	Count  int
+	Page   int
+	Search string
+}
+
+type AlodokterListDataParsedData struct {
+	DocumentLink        string `json:"documentlink"`
+	DocumentContent     string `json:"documentcontent"`
+	DocumentType        string `json:"documenttype"`
+	DocumentDescription string `json:"documentdescription"`
+	DocumentKeywords    string `json:"documentkeywords"`
+	DocumentImage       string `json:"documentimage"`
+}

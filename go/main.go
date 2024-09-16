@@ -90,6 +90,7 @@ func main() {
 
 	crawler := service.NewCrawler(config, logger, postgresDB)
 	alodokter := service.NewAlodokterService(config, logger, postgresDB)
+	halodoc := service.NewHalodocService(config, logger, postgresDB)
 
 	/*
 		SETUP CONTROLLER
@@ -104,6 +105,7 @@ func main() {
 	// inject service to handler
 	handler.NewCrawlerService(crawler)
 	handler.NewAlodokterService(alodokter)
+	handler.NewHalodocService(halodoc)
 
 	/*
 		SETUP ROUTER

@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -148,4 +150,146 @@ func (u *DefaultController) AlodokterCheckUrl(w http.ResponseWriter, r *http.Req
 	u.response.Default(w, http.StatusOK, true, "ok")
 	return
 
+}
+
+func (u *DefaultController) AlodokterListExport(w http.ResponseWriter, r *http.Request) {
+	prefixLog := `AlodokterListExport`
+	defer u.response.Panic(w, r)
+
+	b, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableMarshal)
+		return
+	}
+
+	var (
+		request entity.CrawlpageListReq
+	)
+
+	err = json.Unmarshal(b, &request)
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableUnmarshal)
+		return
+	}
+
+	var (
+		param    entity.AlodokterListDataParsedParam
+		dataList []entity.AlodokterListDataParsedData
+	)
+
+	dataList, err = u.alodokterService.GetListDataParsed(param)
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, "gagal mendapatkan nama penyakit")
+		return
+	}
+
+	currentime := time.Now().Format("2006-01-02_15:04:05")
+
+	// export to csv
+	filename := currentime + "_alodokter_dataset.csv"
+	csvFile, err := os.Create(filename)
+	if err != nil {
+		log.Fatalf("failed creating file: %s", err)
+	}
+	defer csvFile.Close()
+
+	wc := csv.NewWriter(csvFile)
+
+	header := []string{"link", "content", "documenttype", "description", "keywords", "image"}
+	wc.Write(header)
+
+	// Using Write
+	for _, record := range dataList {
+		row := []string{record.DocumentLink, record.DocumentContent, record.DocumentType, record.DocumentDescription, record.DocumentKeywords, record.DocumentImage}
+		fmt.Printf("writing record: %#v\n", row)
+		if err := wc.Write(row); err != nil {
+			log.Fatalln("error writing record to file", err)
+		}
+	}
+
+	wc.Flush()
+	if err := wc.Error(); err != nil {
+		log.Fatal(err) // write file.csv: bad file descriptor
+	}
+
+	u.response.Default(w, http.StatusOK, true, "ok")
+	return
+}
+
+func exportJson(dataList []entity.AlodokterListDataParsedData) {
+
+	// Create or open a JSON file for writing
+	jsonData, err := json.Marshal(dataList)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return
+	}
+
+	currentime := time.Now().Format("2006-01-02_15:04:05")
+
+	file, err := os.Create(currentime + "_alodokter.json")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	defer file.Close()
+
+	// Write the JSON data to the file
+	_, err = file.Write(jsonData)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+}
+
+func (u *DefaultController) AlodokterCrawlerChat(w http.ResponseWriter, r *http.Request) {
+	prefixLog := `AlodokterCrawlerChat`
+	defer u.response.Panic(w, r)
+
+	b, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableMarshal)
+		return
+	}
+
+	var (
+		request entity.AlodokterCrawlerReq
+	)
+
+	err = json.Unmarshal(b, &request)
+	if err != nil {
+		u.response.Error(w, r, err, prefixLog, general.ConstUnableUnmarshal)
+		return
+	}
+
+	// https://www.alodokter.com/komunitas/diskusi/penyakit/page/2
+
+	dataList := make([]string, 50000)
+	startidx := 11600
+	for _, b := range dataList {
+		startidx++
+
+		newtask := `ALODOKTER-CHAT`
+		newurl := fmt.Sprintf("https://www.alodokter.com/komunitas/diskusi/penyakit/page/%v", startidx)
+
+		// fmt.Printf("%#v\n", newurl)
+
+		err = u.crawlerService.Crawling(newurl, newtask)
+		if err != nil {
+			u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
+			return
+		}
+
+		fmt.Printf("", b)
+		fmt.Printf("%v\n", newurl)
+
+		time.Sleep(300 * time.Millisecond)
+	}
+
+	time.Sleep(1000000000 * time.Second)
+
+	u.response.Default(w, http.StatusOK, true, "ok")
+	return
 }

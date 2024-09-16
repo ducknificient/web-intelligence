@@ -12,4 +12,5 @@ type Datastore interface {
 	CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error)
 	CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error)
 	CheckUrlIsExist(link string) (isexist bool, err error)
+	GetAlodokterListParsed(param entity.AlodokterListDataParsedParam) (dataList []entity.AlodokterListDataParsedData, err error)
 }

@@ -399,3 +399,175 @@ func (d *PostgresDB) GetExistingQueue(task string) (dataList []string, err error
 
 	return dataList, err
 }
+
+func (d *PostgresDB) GetAlodokterListParsed(param entity.AlodokterListDataParsedParam) (dataList []entity.AlodokterListDataParsedData, err error) {
+	prefixLog := `GetAlodokterListParsed`
+	var (
+		errMsg string
+	)
+
+	qResultsInt := param.Count
+	if param.Count == 0 {
+		param.Count = 10
+	}
+
+	qPageInt := param.Page
+	if param.Page == 0 {
+		qPageInt = 1
+	}
+
+	var limit = qResultsInt
+	var toffset = qResultsInt
+	if toffset == 0 {
+		toffset = 1
+	}
+	var offset = (qPageInt - 1) * toffset
+
+	// Prepare SQL statement to check if data exists
+	sqlStatement := `SELECT 
+		COUNT(1) 
+		FROM (
+			SELECT 
+				cp.link as document_link,
+				COALESCE(substring(
+					cp.pagesource
+					FROM
+					'<html><body>(.*?)</body></html>'
+				),'') AS document_content,
+				COALESCE(substring(
+					cp.pagesource
+					FROM
+					'const pageType = "(.*?)"'
+				),'') AS document_type,
+				COALESCE(substring(
+					cp.pagesource
+					FROM
+					'<meta name="description" content="(.*?)"'
+				),'') AS document_description,
+				COALESCE(substring(
+					cp.pagesource
+					FROM
+					'<meta name="keywords" content="(.*?)"'
+				),'') AS document_keywords,
+				COALESCE(substring(
+					cp.pagesource
+					FROM
+					'<meta property="og:image" itemprop="image" content="(.*?)"'
+				),'') AS document_image
+			FROM 
+				webintelligence.crawlpage cp
+			WHERE 
+				task ='ALODOKTER'
+			ORDER BY cp.created DESC
+			)`
+	row := d.conn.QueryRow(d.ctx, sqlStatement)
+	var count int
+	err = row.Scan(&count)
+	if err != nil {
+		errMsg = fmt.Sprintf("Unable to select count from webintelligence.tableD. q: %v. param: %v,%v,%v .err: %#v", sqlStatement, limit, offset, `%`+param.Search+`%`, err.Error())
+		err = errors.New(errMsg)
+		return dataList, err
+	}
+
+	if count == 0 {
+		return dataList, err
+	}
+
+	sqlStatement = `SELECT 	
+		document_link,
+		document_content, 
+		document_type,
+		document_description,
+		document_keywords,
+		document_image
+	FROM (
+	SELECT 
+		cp.link as document_link,
+		COALESCE(substring(
+			cp.pagesource
+			FROM
+			'<html><body>(.*?)</body></html>'
+		),'') AS document_content,
+		COALESCE(substring(
+			cp.pagesource
+			FROM
+			'const pageType = "(.*?)"'
+		),'') AS document_type,
+		COALESCE(substring(
+			cp.pagesource
+			FROM
+			'<meta name="description" content="(.*?)"'
+		),'') AS document_description,
+		COALESCE(substring(
+			cp.pagesource
+			FROM
+			'<meta name="keywords" content="(.*?)"'
+		),'') AS document_keywords,
+		COALESCE(substring(
+			cp.pagesource
+			FROM
+			'<meta property="og:image" itemprop="image" content="(.*?)"'
+		),'') AS document_image
+	FROM 
+		webintelligence.crawlpage cp
+	WHERE 
+		task ='ALODOKTER'
+	ORDER BY cp.created DESC
+	)
+	`
+
+	d.logger.Info(sqlStatement)
+	rows, err := d.conn.Query(d.ctx, sqlStatement)
+	if err != nil {
+		errMsg = fmt.Sprintf("Unable to select from webintelligence.crawlpage. q: %v. param: %v,%v,%v .err: %#v", sqlStatement, limit, offset, `%`+param.Search+`%`, err.Error())
+		err = errors.New(errMsg)
+		return dataList, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			rs_document_link        sql.NullString
+			rs_document_content     sql.NullString
+			rs_document_type        sql.NullString
+			rs_document_description sql.NullString
+			rs_document_keywords    sql.NullString
+			rs_document_image       sql.NullString
+		)
+		err := rows.Scan(&rs_document_link, &rs_document_content, &rs_document_type, &rs_document_description,
+			&rs_document_keywords, &rs_document_image)
+
+		if err != nil {
+			errMsg = fmt.Sprintf("%v Can't scan query, q:'%v', err:'%v'.", prefixLog, sqlStatement, err.Error())
+			err = errors.New(errMsg)
+			return dataList, err
+		}
+
+		// clean up data
+		var (
+		// newcontent string
+		)
+		// clean up content
+
+		// remove strong tag
+		// newcontent = strings.ReplaceAll(rs_document_content.String, "<strong>", "")
+		// newcontent = strings.ReplaceAll(newcontent, "</strong>", "")
+
+		// remove p tag
+		// newcontent = strings.ReplaceAll(newcontent, "<p>", "")
+		// newcontent = strings.ReplaceAll(newcontent, "</p>", "")
+
+		data := entity.AlodokterListDataParsedData{
+			DocumentLink:        rs_document_link.String,
+			DocumentContent:     rs_document_content.String,
+			DocumentType:        rs_document_type.String,
+			DocumentDescription: rs_document_description.String,
+			DocumentKeywords:    rs_document_keywords.String,
+			DocumentImage:       rs_document_image.String,
+		}
+
+		dataList = append(dataList, data)
+	}
+
+	return dataList, err
+}

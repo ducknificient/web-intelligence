@@ -20,7 +20,10 @@ type HTTPController interface {
 	CrawlpageList(w http.ResponseWriter, r *http.Request)
 	CrawlpageListParsed(w http.ResponseWriter, r *http.Request)
 	AlodokterCrawler(w http.ResponseWriter, r *http.Request)
+	AlodokterCrawlerChat(w http.ResponseWriter, r *http.Request)
 	AlodokterCheckUrl(w http.ResponseWriter, r *http.Request)
+	AlodokterListExport(w http.ResponseWriter, r *http.Request)
+	HalodocListPenyakit(w http.ResponseWriter, r *http.Request)
 }
 
 type DefaultController struct {
@@ -29,6 +32,7 @@ type DefaultController struct {
 	response         HTTPResponse
 	crawlerService   service.CrawlerService
 	alodokterService service.AlodokterCrawlerService
+	halodocService   service.HalodocCrawlerService
 	crawlStop        bool
 }
 

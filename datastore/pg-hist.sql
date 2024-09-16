@@ -170,6 +170,3 @@ SELECT
 FROM webintelligence.crawlhref t
 
 ;
-
-
-

@@ -87,6 +87,10 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 		c.logger.CrawlLog(fmt.Sprintf("%#v. %#v", line, u))
 		// fmt.Printf("%#v. %#v", line, u)
 
+		if strings.Contains(u, "https://origin1199-www.alodokter") {
+			continue
+		}
+
 		fr, err := c.Fetch(u) // Fetch results
 		if err != nil {
 			fmt.Printf("%#v", err)
@@ -141,7 +145,11 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 						// fmt.Printf("enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
 						msg := fmt.Sprintf("enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
 						c.logger.CrawlLog(msg)
-						Q.Enqueue(v)
+
+						// supaya tidak disimpan di database
+						if u == seedurl {
+							Q.Enqueue(v)
+						}
 					} else {
 						msg := fmt.Sprintf("not enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
 						c.logger.CrawlLog(msg)
@@ -170,6 +178,8 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 		// }
 
 	}
+
+	fmt.Printf("crawl ended for url: %#v", seedurl)
 
 	return err
 }

@@ -17,6 +17,7 @@ type AlodokterCrawlerService interface {
 	GetNamaPenyakit() (dataList []entity.AlodokterPenyakit, err error)
 	GetNamaObat() (dataList []entity.AlodokterObat, err error)
 	CheckUrlIsExist(dataList []entity.AlodokterPenyakit) (listUrl []entity.AlodokterValidation, err error)
+	GetListDataParsed(param entity.AlodokterListDataParsedParam) (dataList []entity.AlodokterListDataParsedData, err error)
 }
 
 type AlodokterCrawler struct {
@@ -45,7 +46,7 @@ func (a *AlodokterCrawler) GetNamaPenyakit() (dataList []entity.AlodokterPenyaki
 
 	dataList = make([]entity.AlodokterPenyakit, 0)
 
-	filename = `/home/spil/Projects/web-intelligence/temp/alodokter/penyakit.json`
+	filename = `/home/spil/jeremy/Projects/s2/web-intelligence/temp/alodokter/penyakit.json`
 
 	jsonFile, err := os.Open(filename)
 	if err != nil {
@@ -89,7 +90,7 @@ func (a *AlodokterCrawler) GetNamaObat() (dataList []entity.AlodokterObat, err e
 
 	dataList = make([]entity.AlodokterObat, 0)
 
-	filename = `/home/spil/Projects/web-intelligence/temp/alodokter/obat.json`
+	filename = `/home/spil/jeremy/Projects/s2/web-intelligence/temp/alodokter/obat.json`
 
 	jsonFile, err := os.Open(filename)
 	if err != nil {
@@ -138,5 +139,16 @@ func (a *AlodokterCrawler) CheckUrlIsExist(dataList []entity.AlodokterPenyakit) 
 	}
 
 	return listUrl, err
+
+}
+
+func (a *AlodokterCrawler) GetListDataParsed(param entity.AlodokterListDataParsedParam) (dataList []entity.AlodokterListDataParsedData, err error) {
+
+	dataList, err = a.database.GetAlodokterListParsed(param)
+	if err != nil {
+		return dataList, err
+	}
+
+	return dataList, err
 
 }

@@ -35,8 +35,12 @@ func NewRouter(controller controller.HTTPController, middleware Middleware, conf
 	router.POST("/crawl/list/parsed", httprouter.WrapF(controller.CrawlpageListParsed))
 
 	router.POST("/alodokter/crawler", httprouter.WrapF(controller.AlodokterCrawler))
+	router.POST("/alodokter/crawler/CHAT", httprouter.WrapF(controller.AlodokterCrawlerChat))
 
 	router.POST("/alodokter/checkurl", httprouter.WrapF(controller.AlodokterCheckUrl))
+	router.POST("/alodokter/list/export", httprouter.WrapF(controller.AlodokterListExport))
+
+	router.POST("/halodoc/checkurl", httprouter.WrapF(controller.HalodocListPenyakit))
 
 	return &DefaultRouter{
 		Router: router,
