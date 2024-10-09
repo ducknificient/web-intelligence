@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic HTML Loader with Pagination</title>
+    <style>
+        .page {
+            display: block;
+        }
+        .page.active {
+            display: block;
+        }
+        .pagination {
+            margin-top: 20px;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+        }
+
+        .page.active {
+            display: block;
+        }
+        .pagination {
+            margin-top: 20px;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+        }
+        .pagination button.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        .goto-page {
+            margin-top: 20px;
+        }
+        .goto-page input {
+            width: 50px;
+            padding: 5px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Loaded HTML Files with Pagination</h1>
+    <div class="pagination" id="pagination"></div>
+    <div class="goto-page">
+        <input type="number" id="page-number" min="1" max="{total_pages}" placeholder="Page">
+        <button onclick="gotoPage()">Go</button>
+    </div>
+    <div id="content"></div>
+    <script>
+        const numberOfFiles = 12612; // Total number of files
+        const filesPerPage = 1; // Number of files per page
+        const totalPages = Math.ceil(numberOfFiles / filesPerPage);
+        let currentPage = 1;
+
+        function loadPage(page) {
+            document.getElementById('content').innerHTML = '';
+            for (let i = (page - 1) * filesPerPage; i < page * filesPerPage && i < numberOfFiles; i++) {
+                const iframe = document.createElement('iframe');
+                iframe.src = `dataset/data_${i+1}.html`;
+                iframe.style.width = "100%";
+                iframe.style.height = "1024px";
+                iframe.className = 'page';
+                document.getElementById('content').appendChild(iframe);
+            }
+            updatePagination();
+        }
+
+        function updatePagination() {
+            document.getElementById('pagination').innerHTML = '';
+            const pagination = document.getElementById('pagination');
+
+            const createButton = (text, page, disabled = false) => {
+                const button = document.createElement('button');
+                button.innerText = text;
+                button.onclick = () => {
+                    currentPage = page;
+                    loadPage(currentPage);
+                };
+                if (disabled) {
+                    button.classList.add('disabled');
+                }
+                return button;
+            };
+
+            // First and Previous buttons
+            pagination.appendChild(createButton('First', 1, currentPage === 1));
+            pagination.appendChild(createButton('Previous', currentPage - 1, currentPage === 1));
+
+            // Page number buttons
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const button = createButton(i, i, i === currentPage);
+                if (i === currentPage) {
+                    button.disabled = true;
+                }
+                pagination.appendChild(button);
+            }
+
+            // Next and Last buttons
+            pagination.appendChild(createButton('Next', currentPage + 1, currentPage === totalPages));
+            pagination.appendChild(createButton('Last', totalPages, currentPage === totalPages));
+        }
+
+        function gotoPage() {
+            const pageNumber = parseInt(document.getElementById('page-number').value);
+            if (pageNumber >= 1 && pageNumber <= totalPages) {
+                currentPage = pageNumber;
+                loadPage(currentPage);
+            } else {
+                alert(`Please enter a valid page number between 1 and ${totalPages}`);
+            }
+        }
+
+        // Load the first page initially
+        loadPage(currentPage);
+    </script>
+
+<script>
+</script>
+</body>
+</html>

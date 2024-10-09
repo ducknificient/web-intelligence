@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic HTML Loader</title>
+</head>
+<body>
+    <h1>Loaded HTML Files</h1>
+    <div id="content"></div>
+
+    <script>
+        // Tentukan jumlah file HTML yang akan dimuat
+        const numberOfFiles = 5; // Sesuaikan dengan jumlah file yang dihasilkan
+
+        function loadHTML(file) {
+            fetch(file)
+                .then(response => response.text())
+                .then(data => {
+                    const div = document.createElement('div');
+                    div.innerHTML = data;
+                    document.getElementById('content').appendChild(div);
+                })
+                .catch(error => console.error('Error loading file:', error));
+        }
+
+        // Loop melalui setiap file HTML dan muat kontennya
+        for (let i = 0; i < numberOfFiles; i++) {
+            const fileName = `dataset/data_${i}.html`;
+            loadHTML(fileName);
+        }
+    </script>
+</body>
+</html>
