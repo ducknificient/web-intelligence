@@ -2,11 +2,12 @@ package service
 
 import (
 	"fmt"
-	"go-cloud/entity"
 
-	"go-cloud/config"
-	"go-cloud/datastore"
-	"go-cloud/logger"
+	"github.com/ducknificient/web-intelligence/go-cloud/entity"
+
+	"github.com/ducknificient/web-intelligence/go-cloud/config"
+	"github.com/ducknificient/web-intelligence/go-cloud/datastore"
+	"github.com/ducknificient/web-intelligence/go-cloud/logger"
 )
 
 type AlodokterCrawlerService interface {

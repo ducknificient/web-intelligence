@@ -1,6 +1,6 @@
 package datastore
 
-import "go-cloud/entity"
+import "github.com/ducknificient/web-intelligence/go-cloud/entity"
 
 type Datastore interface {
 	StoreD(pagesource string, link string, task string, documenttype string, mimetype string) (err error)

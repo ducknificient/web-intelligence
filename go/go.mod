@@ -1,6 +1,6 @@
 module github.com/ducknificient/web-intelligence/go
 
-go 1.19
+go 1.20
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.1
@@ -23,7 +23,6 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
@@ -31,4 +30,3 @@ require (
 )
 
 replace github.com/julienschmidt/httprouter => /home/spil/jeremy/Projects/opensource/httprouter
-

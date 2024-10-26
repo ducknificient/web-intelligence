@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go-cloud/entity"
+	"github.com/ducknificient/web-intelligence/go-cloud/entity"
 )
 
 func (d *PostgresDB) CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error) {

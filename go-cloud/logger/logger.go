@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	configpackage "go-cloud/config"
+	configpackage "github.com/ducknificient/web-intelligence/go-cloud/config"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	configpackage "go-cloud/config"
-	"go-cloud/logger"
+	configpackage "github.com/ducknificient/web-intelligence/go-cloud/config"
+	"github.com/ducknificient/web-intelligence/go-cloud/logger"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )

@@ -8,16 +8,17 @@ import (
 	"syscall"
 	"time"
 
-	configpackage "go-cloud/config"
-	"go-cloud/datastore"
-	loggerpackage "go-cloud/logger"
-	"go-cloud/service"
+	configpackage "github.com/ducknificient/web-intelligence/go-cloud/config"
+	"github.com/ducknificient/web-intelligence/go-cloud/datastore"
+	loggerpackage "github.com/ducknificient/web-intelligence/go-cloud/logger"
+	"github.com/ducknificient/web-intelligence/go-cloud/service"
 )
 
 var (
 	configPath string
 	config     *configpackage.AppConfiguration
 	err        error
+	offset     string
 )
 
 func init() {
@@ -26,6 +27,12 @@ func init() {
 	var args = os.Args
 	configPath = args[1]
 	// configPath = "/home/ducknificient/crawlmachine/config-cloud.json"
+
+	// if len(args) == 2 {
+	// 	offset = fmt.Sprintf(args[2])
+	// } else {
+	// 	offset = "15000"
+	// }
 
 	// config file path
 	config, err = configpackage.NewConfiguration(configPath)
@@ -90,7 +97,8 @@ func main() {
 	// https://www.alodokter.com/komunitas/diskusi/penyakit/page/2
 
 	dataList := make([]string, 50000)
-	startidx := 11500
+	// startidx := 11500
+	startidx := 0
 	for _, b := range dataList {
 		startidx++
 

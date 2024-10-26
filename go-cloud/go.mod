@@ -1,4 +1,4 @@
-module go-cloud
+module github.com/ducknificient/web-intelligence/go-cloud
 
 go 1.20
 
@@ -17,6 +17,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
+	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
