@@ -28,6 +28,7 @@ type AppConfiguration struct {
 	AppIP      *string `json:"appip"`
 	AppPort    *string `json:"appport"`
 	Production *string `json:"production"`
+	HTTPS      *string `json:"https"`
 	Version    *string `json:"version"`
 
 	// misc
@@ -51,10 +52,14 @@ type AppConfiguration struct {
 	PathCrawlPdf   *string `json:"pathcrawlpdf"`
 
 	// authentication
-	AesKey      *string `json:"aeskey"`
-	CookieName  *string `json:"cookiename"`
-	ServiceName *string `json:"servicename"`
-	UserHeader  *string `json:"userheader"`
+	AesKey         *string `json:"aeskey"`
+	CookieName     *string `json:"cookiename"`
+	ServiceName    *string `json:"servicename"`
+	UserHeader     *string `json:"userheader"`
+	Certificate    *string `json:"certificate"`
+	CertificateKey *string `json:"certificatekey"`
+
+	StartIndex int `json:"start_index"`
 }
 
 func NewConfiguration(filename string) (config *AppConfiguration, err error) {

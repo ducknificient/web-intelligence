@@ -12,12 +12,11 @@ import (
 
 	"github.com/ducknificient/web-intelligence/go/entity"
 	"github.com/ducknificient/web-intelligence/go/general"
-	"github.com/ducknificient/web-intelligence/go/service"
 )
 
-func (c *DefaultController) NewAlodokterService(service service.AlodokterCrawlerService) {
-	c.alodokterService = service
-}
+// func (c *DefaultController) NewAlodokterService(service service.DefaultService) {
+// 	c.alodokterService = service
+// }
 
 func (u *DefaultController) AlodokterCrawler(w http.ResponseWriter, r *http.Request) {
 	prefixLog := `AlodokterCrawler`
@@ -43,7 +42,7 @@ func (u *DefaultController) AlodokterCrawler(w http.ResponseWriter, r *http.Requ
 	var (
 		dataList []entity.AlodokterPenyakit
 	)
-	dataList, err = u.alodokterService.GetNamaPenyakit()
+	dataList, err = u.defaultService.AlodokterGetNamaPenyakit()
 	if err != nil {
 		u.response.Error(w, r, err, prefixLog, "gagal mendapatkan nama penyakit")
 		return
@@ -57,7 +56,7 @@ func (u *DefaultController) AlodokterCrawler(w http.ResponseWriter, r *http.Requ
 		newurl := "https://www.alodokter.com/" + b.Permalink
 		// fmt.Printf("%#v\n", newurl)
 
-		err = u.crawlerService.Crawling(newurl, newtask)
+		err = u.defaultService.Crawling(newurl, newtask)
 		if err != nil {
 			u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
 			return
@@ -96,7 +95,7 @@ func (u *DefaultController) AlodokterCheckUrl(w http.ResponseWriter, r *http.Req
 	var (
 		dataList []entity.AlodokterPenyakit
 	)
-	dataList, err = u.alodokterService.GetNamaPenyakit()
+	dataList, err = u.defaultService.AlodokterGetNamaPenyakit()
 	if err != nil {
 		u.response.Error(w, r, err, prefixLog, "gagal mendapatkan nama penyakit")
 		return
@@ -104,7 +103,7 @@ func (u *DefaultController) AlodokterCheckUrl(w http.ResponseWriter, r *http.Req
 
 	var listUrl []entity.AlodokterValidation
 	fmt.Printf("total: %#v\n", len(dataList))
-	listUrl, err = u.alodokterService.CheckUrlIsExist(dataList)
+	listUrl, err = u.defaultService.AlodokterCheckUrlIsExist(dataList)
 	if err != nil {
 		u.response.Error(w, r, err, prefixLog, "gagal check url")
 		return
@@ -178,7 +177,7 @@ func (u *DefaultController) AlodokterListExport(w http.ResponseWriter, r *http.R
 		dataList []entity.AlodokterListDataParsedData
 	)
 
-	dataList, err = u.alodokterService.GetListDataParsed(param)
+	dataList, err = u.defaultService.AlodokterGetListDataParsed(param)
 	if err != nil {
 		u.response.Error(w, r, err, prefixLog, "gagal mendapatkan nama penyakit")
 		return
@@ -276,7 +275,7 @@ func (u *DefaultController) AlodokterCrawlerChat(w http.ResponseWriter, r *http.
 
 		// fmt.Printf("%#v\n", newurl)
 
-		err = u.crawlerService.Crawling(newurl, newtask)
+		err = u.defaultService.Crawling(newurl, newtask)
 		if err != nil {
 			u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
 			return

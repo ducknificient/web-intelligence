@@ -14,10 +14,6 @@ import (
 	"github.com/ducknificient/web-intelligence/go/logger"
 )
 
-type HalodocCrawlerService interface {
-	GetListPenyakit() (dataList []entity.HalodocListPenyakit, err error)
-}
-
 type HalodocCrawler struct {
 	config   config.Configuration
 	logger   logger.Logger
@@ -33,7 +29,7 @@ func NewHalodocService(config config.Configuration, logger logger.Logger, databa
 	}
 }
 
-func (a *HalodocCrawler) GetListPenyakit() (dataList []entity.HalodocListPenyakit, err error) {
+func (a *WIService) HalodocGetListPenyakit() (dataList []entity.HalodocListPenyakit, err error) {
 
 	// open json
 	var (

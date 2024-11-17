@@ -8,12 +8,11 @@ import (
 
 	"github.com/ducknificient/web-intelligence/go/entity"
 	"github.com/ducknificient/web-intelligence/go/general"
-	"github.com/ducknificient/web-intelligence/go/service"
 )
 
-func (c *DefaultController) NewCrawlerService(service service.CrawlerService) {
-	c.crawlerService = service
-}
+// func (c *DefaultController) NewCrawlerService(service service.DefaultService) {
+// 	c.crawlerService = service
+// }
 
 func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request) {
 	prefixLog := `StartCrawling`
@@ -55,7 +54,7 @@ func (u *DefaultController) StartCrawling(w http.ResponseWriter, r *http.Request
 	// 	return
 	// }
 
-	err = u.crawlerService.Crawling(request.SeedURL, request.Task)
+	err = u.defaultService.Crawling(request.SeedURL, request.Task)
 	if err != nil {
 		u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
 		return
@@ -118,7 +117,7 @@ func (u *DefaultController) StartMultipleCrawling(w http.ResponseWriter, r *http
 		// }()
 
 		fmt.Printf("starting crawl for seedurl: %#v\n", seedurl)
-		err = u.crawlerService.Crawling(seedurl, request.Task)
+		err = u.defaultService.Crawling(seedurl, request.Task)
 		if err != nil {
 			u.response.Error(w, r, err, prefixLog, fmt.Sprintf("Unable to crawl."))
 			return
@@ -152,7 +151,7 @@ func (u *DefaultController) StopCrawling(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	u.crawlerService.StopCrawling()
+	u.defaultService.StopCrawling()
 
 	u.response.Default(w, http.StatusOK, true, "ok")
 	return
@@ -198,7 +197,7 @@ func (u *DefaultController) CrawlpageList(w http.ResponseWriter, r *http.Request
 
 	fmt.Printf("param: %#v\n", param)
 
-	dataList, err = u.crawlerService.CrawlpageList(param)
+	dataList, err = u.defaultService.CrawlpageList(param)
 	if err != nil {
 		u.response.Error(w, r, err, prefixLog, "Unable to get crawlpage list.")
 		return
@@ -249,7 +248,7 @@ func (u *DefaultController) CrawlpageListParsed(w http.ResponseWriter, r *http.R
 
 	fmt.Printf("param: %#v\n", param)
 
-	dataList, err = u.crawlerService.CrawlpageListParsed(param)
+	dataList, err = u.defaultService.CrawlpageListParsed(param)
 	if err != nil {
 		u.response.Error(w, r, err, prefixLog, "Unable to get crawlpage list.")
 		return

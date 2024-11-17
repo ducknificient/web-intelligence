@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"strings"
 
 	"github.com/ducknificient/web-intelligence/go/entity"
@@ -564,6 +566,137 @@ func (d *PostgresDB) GetAlodokterListParsed(param entity.AlodokterListDataParsed
 			DocumentDescription: rs_document_description.String,
 			DocumentKeywords:    rs_document_keywords.String,
 			DocumentImage:       rs_document_image.String,
+		}
+
+		dataList = append(dataList, data)
+	}
+
+	return dataList, err
+}
+
+func (d *PostgresDB) GetListImageUrl() (dataList []entity.CookpadRecipeList, err error) {
+	prefixLog := `GetListImageUrl`
+	var (
+		errMsg string
+	)
+
+	sqlStatement := `select 
+		cp.link
+	from webintelligence.crawlpage cp 
+	where 
+	1=1
+	AND cp.task = 'COOKPAD-JAWATIMUR'
+	and CP.pagesource is not null
+	and substring(
+		cp.pagesource 
+		FROM
+		'><img alt="(.*?)<span>Reaksi</span>'
+	) is not null
+	order by created ASC`
+
+	d.logger.Info(sqlStatement)
+	rows, err := d.conn.Query(d.ctx, sqlStatement)
+	if err != nil {
+		errMsg = fmt.Sprintf("Unable to select from webintelligence.crawlpage. q: '%v'. .err: %#v", sqlStatement, err.Error())
+		err = errors.New(errMsg)
+		return dataList, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			rs_document_link sql.NullString
+		)
+		err := rows.Scan(&rs_document_link)
+
+		if err != nil {
+			errMsg = fmt.Sprintf("%v Can't scan query, q:'%v', err:'%v'.", prefixLog, sqlStatement, err.Error())
+			err = errors.New(errMsg)
+			return dataList, err
+		}
+
+		// clean up data
+		var (
+		// newcontent string
+		)
+		// clean up content
+
+		// remove strong tag
+		// newcontent = strings.ReplaceAll(rs_document_content.String, "<strong>", "")
+		// newcontent = strings.ReplaceAll(newcontent, "</strong>", "")
+
+		// remove p tag
+		// newcontent = strings.ReplaceAll(newcontent, "<p>", "")
+		// newcontent = strings.ReplaceAll(newcontent, "</p>", "")
+
+		data := entity.CookpadRecipeList{
+			Url: rs_document_link.String,
+		}
+
+		dataList = append(dataList, data)
+	}
+
+	return dataList, err
+}
+
+func (d *PostgresDB) GetCookpadListImage() (dataList []entity.CookpadImageList, err error) {
+	prefixLog := `GetCookpadListImage`
+	var (
+		errMsg string
+	)
+
+	sqlStatement := `select cp.link,
+	row_number() OVER (ORDER by created) AS filename,
+	cp.document
+	from webintelligence.crawlpage cp 
+	where 
+	1=1
+	AND cp.task = 'COOKPAD-JAWATIMUR-IMAGE'
+	and cp.mimetype = 'image/jpeg'
+	order by created desc`
+
+	d.logger.Info(sqlStatement)
+	rows, err := d.conn.Query(d.ctx, sqlStatement)
+	if err != nil {
+		errMsg = fmt.Sprintf("Unable to select from webintelligence.crawlpage. q: '%v'. .err: %#v", sqlStatement, err.Error())
+		err = errors.New(errMsg)
+		return dataList, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			rs_document_link sql.NullString
+			rs_filename      sql.NullString
+			rs_image         []byte
+		)
+		err := rows.Scan(&rs_document_link, &rs_filename, &rs_image)
+
+		if err != nil {
+			errMsg = fmt.Sprintf("%v Can't scan query, q:'%v', err:'%v'.", prefixLog, sqlStatement, err.Error())
+			err = errors.New(errMsg)
+			return dataList, err
+		}
+
+		// clean up data
+		var (
+		// newcontent string
+		)
+		// clean up content
+
+		image_path := `/home/spil/jeremy/Projects/s2/web-intelligence/go/image_folder/images/` + rs_filename.String + `.jpeg`
+
+		// Save the bytea data to a .jpeg file
+		err = ioutil.WriteFile(image_path, rs_image, 0644)
+		if err != nil {
+			log.Fatalf("Failed to write file: %v\n", err)
+		}
+
+		fmt.Println("Image saved successfully at", image_path)
+
+		data := entity.CookpadImageList{
+			Filename: rs_filename.String,
+			// Url: rs_document_link.String,
 		}
 
 		dataList = append(dataList, data)

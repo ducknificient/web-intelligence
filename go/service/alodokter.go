@@ -13,13 +13,6 @@ import (
 	"github.com/ducknificient/web-intelligence/go/logger"
 )
 
-type AlodokterCrawlerService interface {
-	GetNamaPenyakit() (dataList []entity.AlodokterPenyakit, err error)
-	GetNamaObat() (dataList []entity.AlodokterObat, err error)
-	CheckUrlIsExist(dataList []entity.AlodokterPenyakit) (listUrl []entity.AlodokterValidation, err error)
-	GetListDataParsed(param entity.AlodokterListDataParsedParam) (dataList []entity.AlodokterListDataParsedData, err error)
-}
-
 type AlodokterCrawler struct {
 	config   config.Configuration
 	logger   logger.Logger
@@ -35,7 +28,7 @@ func NewAlodokterService(config config.Configuration, logger logger.Logger, data
 	}
 }
 
-func (a *AlodokterCrawler) GetNamaPenyakit() (dataList []entity.AlodokterPenyakit, err error) {
+func (a *WIService) AlodokterGetNamaPenyakit() (dataList []entity.AlodokterPenyakit, err error) {
 
 	// open json
 	var (
@@ -79,7 +72,7 @@ func (a *AlodokterCrawler) GetNamaPenyakit() (dataList []entity.AlodokterPenyaki
 	return dataList, err
 }
 
-func (a *AlodokterCrawler) GetNamaObat() (dataList []entity.AlodokterObat, err error) {
+func (a *WIService) AlodokterGetNamaObat() (dataList []entity.AlodokterObat, err error) {
 
 	// open json
 	var (
@@ -117,7 +110,7 @@ func (a *AlodokterCrawler) GetNamaObat() (dataList []entity.AlodokterObat, err e
 	return dataList, err
 }
 
-func (a *AlodokterCrawler) CheckUrlIsExist(dataList []entity.AlodokterPenyakit) (listUrl []entity.AlodokterValidation, err error) {
+func (a *WIService) AlodokterCheckUrlIsExist(dataList []entity.AlodokterPenyakit) (listUrl []entity.AlodokterValidation, err error) {
 
 	var isexist bool = false
 
@@ -142,7 +135,7 @@ func (a *AlodokterCrawler) CheckUrlIsExist(dataList []entity.AlodokterPenyakit) 
 
 }
 
-func (a *AlodokterCrawler) GetListDataParsed(param entity.AlodokterListDataParsedParam) (dataList []entity.AlodokterListDataParsedData, err error) {
+func (a *WIService) AlodokterGetListDataParsed(param entity.AlodokterListDataParsedParam) (dataList []entity.AlodokterListDataParsedData, err error) {
 
 	dataList, err = a.database.GetAlodokterListParsed(param)
 	if err != nil {

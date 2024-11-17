@@ -88,9 +88,7 @@ func main() {
 		SETUP SERVICE
 	*/
 
-	crawler := service.NewCrawler(config, logger, postgresDB)
-	alodokter := service.NewAlodokterService(config, logger, postgresDB)
-	halodoc := service.NewHalodocService(config, logger, postgresDB)
+	wiservice := service.NewWIService(config, logger, postgresDB)
 
 	/*
 		SETUP CONTROLLER
@@ -103,9 +101,7 @@ func main() {
 	handler := controllerpackage.NewHTTPController(config, logger, httpresponse)
 
 	// inject service to handler
-	handler.NewCrawlerService(crawler)
-	handler.NewAlodokterService(alodokter)
-	handler.NewHalodocService(halodoc)
+	handler.NewWIService(wiservice)
 
 	/*
 		SETUP ROUTER
@@ -128,8 +124,15 @@ func main() {
 		Handler: httprouter.Router,
 	}, logger)
 
-	// run server
-	httpserver.Run()
+	if *config.HTTPS == `true` {
+		httpserver.SetCertificate(*config.Certificate, *config.CertificateKey)
+
+		// run server
+		httpserver.RunTLS()
+
+	} else {
+		httpserver.Run()
+	}
 
 	/*
 		Graceful shutdown
@@ -153,6 +156,7 @@ func main() {
 		// fmt.Errorf(fmt.Sprintf("Server forced to shutdown : %v\n", err.Error()))
 		logger.Fatal(fmt.Sprintf("Server forced to shutdown : %v\n", err.Error()))
 	}
+
 }
 
 /*

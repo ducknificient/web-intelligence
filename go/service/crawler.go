@@ -16,15 +16,6 @@ import (
 	"github.com/ducknificient/web-intelligence/go/logger"
 )
 
-type CrawlerService interface {
-	Crawling(seedurl string, task string) (err error)
-	TestCrawling()
-	StartCrawling() (err error)
-	StopCrawling() (err error)
-	CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error)
-	CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error)
-}
-
 type BasicCrawling struct {
 	config config.Configuration
 	logger logger.Logger
@@ -50,7 +41,7 @@ func NewCrawler(config config.Configuration, logger logger.Logger, datastore dat
 // 	return isstop
 // }
 
-func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
+func (c *WIService) Crawling(seedurl string, task string) (err error) {
 
 	var (
 		errMsg string
@@ -108,6 +99,11 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 		case "html":
 			du = string(fr.DocumentFile)
 			if strings.TrimSpace(du) != "" { // If the HTML document is not empty
+
+				// if strings.Contains(u, "https://cookpad.com/id/resep/") {
+
+				// }
+
 				err = c.StoreD(du, u, fr) // Store it in D
 				if err != nil {
 					errMsg = fmt.Sprintf("Unable to storeD. task:{%#v} .seedurl:{%#v} .err: %#v .u:{%#v} .du:{%#v} \n", seedurl, task, err.Error(), u, du)
@@ -145,11 +141,18 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 						// fmt.Printf("enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
 						msg := fmt.Sprintf("enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
 						c.logger.CrawlLog(msg)
+						// Q.Enqueue(v)
 
 						// supaya tidak disimpan di database
 						if u == seedurl {
 							Q.Enqueue(v)
 						}
+						//  else {
+						// if strings.Contains(u, "https://cookpad.com/id/resep/2") {
+						// 	Q.Enqueue(v)
+						// }
+						// }
+
 					} else {
 						msg := fmt.Sprintf("not enqued. %#v, %#v,%#v\n ", v, !Q.Contains(v), !isContainsD)
 						c.logger.CrawlLog(msg)
@@ -184,19 +187,19 @@ func (c *BasicCrawling) Crawling(seedurl string, task string) (err error) {
 	return err
 }
 
-func (c *BasicCrawling) StartCrawling() (err error) {
+func (c *WIService) StartCrawling() (err error) {
 	c.IsStop = true
 
 	return err
 }
 
-func (c *BasicCrawling) StopCrawling() (err error) {
+func (c *WIService) StopCrawling() (err error) {
 	c.IsStop = false
 
 	return err
 }
 
-func (c *BasicCrawling) TestCrawling() {
+func (c *WIService) TestCrawling() {
 
 	for {
 
@@ -212,7 +215,7 @@ func (c *BasicCrawling) TestCrawling() {
 
 }
 
-func (c *BasicCrawling) Fetch2(url string) (htmltext entity.FetchResult, err error) {
+func (c *WIService) Fetch2(url string) (htmltext entity.FetchResult, err error) {
 
 	// Get content from URL
 	resp, err := http.Get(url)
@@ -249,15 +252,39 @@ func (c *BasicCrawling) Fetch2(url string) (htmltext entity.FetchResult, err err
 	return htmltext, err
 }
 
-func (c *BasicCrawling) Fetch(url string) (fetchres entity.FetchResult, err error) {
+func (c *WIService) Fetch(url string) (fetchres entity.FetchResult, err error) {
 
-	// Get content from URL
-	resp, err := http.Get(url)
+	// Create a custom HTTP client with the TLS configuration
+	client := &http.Client{
+		Timeout: time.Minute,
+	}
+
+	request_api, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("error http new request")
+		return fetchres, err
+	}
+
+	// request_api.Header.Set("Content-Type", "application/json")
+	// request_api.Header.Set("Accept", "application/json")
+	// param := request_api.URL.Query()
+	// decoded, err := url.QueryUnescape(param.Encode())
+	// request_api.URL.RawQuery = decoded
+
+	resp, err := client.Do(request_api)
 	if err != nil {
 		fmt.Println("error http get")
 		return fetchres, err
 	}
 	defer resp.Body.Close()
+
+	// Get content from URL
+	// resp, err := http.Get(url)
+	// if err != nil {
+	// 	fmt.Println("error http get")
+	// 	return fetchres, err
+	// }
+	// defer resp.Body.Close()
 
 	// Read HTML content
 	respbody, err := io.ReadAll(resp.Body)
@@ -316,7 +343,7 @@ func (c *BasicCrawling) Fetch(url string) (fetchres entity.FetchResult, err erro
 	return fetchres, err
 }
 
-func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs []string, err error) {
+func (c *WIService) ExtractURL(inputurl string, html string) (filteredHrefs []string, err error) {
 	// Parse base URL
 	base, err := url.Parse(inputurl)
 	if err != nil {
@@ -329,7 +356,7 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 	// baseHost += `/`
 
 	// Regex pattern to find href attributes
-	hrefPattern := `href=["'](.*?)["']`
+	hrefPattern := `src=["'](.*?)["']`
 
 	// Find all matches of href attributes
 	matches := regexp.MustCompile(hrefPattern).FindAllStringSubmatch(html, -1)
@@ -351,9 +378,14 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 		}
 		c.logger.CrawlLog(fmt.Sprintf("parsed href : %#v \n", parsedHref.Path))
 
+		fmt.Printf("%#v %#v %#v\n", inputurl, parsedHref.Host, baseHost)
+		c.logger.CrawlLog(fmt.Sprintf("%#v %#v %#v\n", inputurl, parsedHref.Host, baseHost))
+
 		// If the found URL has a host and the host is a subdomain of the base host
 		if parsedHref.Host != "" {
-			if strings.Contains(parsedHref.Host, baseHost) {
+
+			// if strings.Contains(parsedHref.Host, baseHost) {
+			if parsedHref.Host == `img-global.cpcdn.com` {
 				if !strings.HasPrefix(href, "http") {
 					href = "https:" + href
 				}
@@ -390,7 +422,7 @@ func (c *BasicCrawling) ExtractURL(inputurl string, html string) (filteredHrefs 
 	return filteredHrefs, err
 }
 
-func (c *BasicCrawling) StoreD(pagesource string, link string, fr entity.FetchResult) (err error) {
+func (c *WIService) StoreD(pagesource string, link string, fr entity.FetchResult) (err error) {
 
 	err = c.Datastore.StoreD(pagesource, link, c.Task, fr.DocumentType, fr.DocumentContentType)
 	if err != nil {
@@ -400,7 +432,7 @@ func (c *BasicCrawling) StoreD(pagesource string, link string, fr entity.FetchRe
 	return err
 }
 
-func (c *BasicCrawling) StoreDocument(link string, documentype string, document []byte, documentcontenttype string) (err error) {
+func (c *WIService) StoreDocument(link string, documentype string, document []byte, documentcontenttype string) (err error) {
 
 	err = c.Datastore.StoreDocument(link, c.Task, documentype, document, documentcontenttype)
 	if err != nil {
@@ -410,7 +442,7 @@ func (c *BasicCrawling) StoreDocument(link string, documentype string, document 
 	return err
 }
 
-func (c *BasicCrawling) StoreE(link string, href string) (err error) {
+func (c *WIService) StoreE(link string, href string) (err error) {
 
 	err = c.Datastore.StoreE(link, href, c.Task)
 	if err != nil {
@@ -420,7 +452,7 @@ func (c *BasicCrawling) StoreE(link string, href string) (err error) {
 	return err
 }
 
-func (c *BasicCrawling) ContainsD(link string) (contains bool, err error) {
+func (c *WIService) ContainsD(link string) (contains bool, err error) {
 
 	contains, err = c.Datastore.ContainsD(link)
 	if err != nil {
@@ -430,7 +462,7 @@ func (c *BasicCrawling) ContainsD(link string) (contains bool, err error) {
 	return contains, err
 }
 
-func (c *BasicCrawling) CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error) {
+func (c *WIService) CrawlpageList(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListData, err error) {
 
 	fmt.Println(param)
 	// var dataList []entity.CrawlhrefListData
@@ -442,7 +474,7 @@ func (c *BasicCrawling) CrawlpageList(param entity.CrawlpageListParam) (dataList
 	return dataList, err
 }
 
-func (c *BasicCrawling) CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error) {
+func (c *WIService) CrawlpageListParsed(param entity.CrawlpageListParam) (dataList []entity.CrawlpageListParsedData, err error) {
 
 	fmt.Println(param)
 	// var dataList []entity.CrawlhrefListData
@@ -454,7 +486,7 @@ func (c *BasicCrawling) CrawlpageListParsed(param entity.CrawlpageListParam) (da
 	return dataList, err
 }
 
-func (c *BasicCrawling) GetExistingQueue() (queue []string, err error) {
+func (c *WIService) GetExistingQueue() (queue []string, err error) {
 
 	queue, err = c.Datastore.GetExistingQueue(c.Task)
 	if err != nil {
@@ -464,7 +496,7 @@ func (c *BasicCrawling) GetExistingQueue() (queue []string, err error) {
 	return queue, err
 }
 
-func (c *BasicCrawling) GetLatestSeedUrl(param_seedurl string) (seedurl string, err error) {
+func (c *WIService) GetLatestSeedUrl(param_seedurl string) (seedurl string, err error) {
 
 	// var seedurl string
 	seedurl, err = c.Datastore.GetLatestSeedUrl(c.Task, param_seedurl)

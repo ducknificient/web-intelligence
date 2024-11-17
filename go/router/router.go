@@ -42,6 +42,10 @@ func NewRouter(controller controller.HTTPController, middleware Middleware, conf
 
 	router.POST("/halodoc/checkurl", httprouter.WrapF(controller.HalodocListPenyakit))
 
+	router.POST("/cookpad/crawler", httprouter.WrapF(controller.CookpadCrawler))
+	router.POST("/cookpad/crawler/image", httprouter.WrapF(controller.CookpadImageCrawler))
+	router.POST("/cookpad/getimage", httprouter.WrapF(controller.CookpadGetImage))
+
 	return &DefaultRouter{
 		Router: router,
 	}

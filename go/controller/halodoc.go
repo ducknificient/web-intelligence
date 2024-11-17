@@ -8,12 +8,11 @@ import (
 
 	"github.com/ducknificient/web-intelligence/go/entity"
 	"github.com/ducknificient/web-intelligence/go/general"
-	"github.com/ducknificient/web-intelligence/go/service"
 )
 
-func (c *DefaultController) NewHalodocService(service service.HalodocCrawlerService) {
-	c.halodocService = service
-}
+// func (c *DefaultController) NewHalodocService(service service.DefaultService) {
+// 	c.halodocService = service
+// }
 
 func (u *DefaultController) HalodocListPenyakit(w http.ResponseWriter, r *http.Request) {
 	prefixLog := `HalodocListPenyakit`
@@ -40,7 +39,7 @@ func (u *DefaultController) HalodocListPenyakit(w http.ResponseWriter, r *http.R
 		dataList []entity.HalodocListPenyakit
 	)
 
-	dataList, err = u.halodocService.GetListPenyakit()
+	dataList, err = u.defaultService.HalodocGetListPenyakit()
 	if err != nil {
 		u.response.Error(w, r, err, prefixLog, "gagal mendapatkan nama penyakit")
 		return

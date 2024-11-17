@@ -24,16 +24,21 @@ type HTTPController interface {
 	AlodokterCheckUrl(w http.ResponseWriter, r *http.Request)
 	AlodokterListExport(w http.ResponseWriter, r *http.Request)
 	HalodocListPenyakit(w http.ResponseWriter, r *http.Request)
+	CookpadCrawler(w http.ResponseWriter, r *http.Request)
+	CookpadImageCrawler(w http.ResponseWriter, r *http.Request)
+	CookpadGetImage(w http.ResponseWriter, r *http.Request)
 }
 
 type DefaultController struct {
-	config           configpackage.Configuration
-	logger           loggerpackage.Logger
-	response         HTTPResponse
-	crawlerService   service.CrawlerService
-	alodokterService service.AlodokterCrawlerService
-	halodocService   service.HalodocCrawlerService
-	crawlStop        bool
+	config         configpackage.Configuration
+	logger         loggerpackage.Logger
+	response       HTTPResponse
+	defaultService service.DefaultService
+	// crawlerService   service.DefaultService
+	// alodokterService service.DefaultService
+	// halodocService   service.DefaultService
+	// cookpadService   service.DefaultService
+	crawlStop bool
 }
 
 // func NewDefaultController(logger logger.Logger) (default_controller *DefaultController) {
@@ -56,6 +61,10 @@ func NewHTTPController(config configpackage.Configuration, logger loggerpackage.
 	}
 
 	return defaultController
+}
+
+func (c *DefaultController) NewWIService(service service.DefaultService) {
+	c.defaultService = service
 }
 
 func (u *DefaultController) Root(w http.ResponseWriter, r *http.Request) {
