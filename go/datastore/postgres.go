@@ -10,45 +10,46 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+type PgInfo struct {
+	Host        string
+	DbName      string
+	Username    string
+	Password    string
+	Port        string
+	SSLMode     string
+	PoolMaxConn string
+}
+
 type PostgresDB struct {
 	ctx    context.Context
 	config configpackage.Configuration
 	logger logger.Logger
 
-	pginfo configpackage.PgInfo
+	pginfo PgInfo
 	conn   *pgxpool.Pool
 }
 
-func GetListPgModel(ctx context.Context, config configpackage.Configuration, logger logger.Logger) (listPostgresModel []*PostgresDB) {
+func NewPostgresDatastoreList(ctx context.Context, config configpackage.Configuration, logger logger.Logger) (mapPgModel map[string]*PostgresDB, err error) {
 
-	for _, pginfo := range *config.GetConfiguration().PgList {
-		// db := configpackage.PgInfo{Logger: logger, PgInfo: info}
-
-		db := &PostgresDB{
-			ctx:    ctx,
-			config: config,
-			logger: logger,
-			pginfo: pginfo,
-		}
-
-		listPostgresModel = append(listPostgresModel, db)
-	}
-
-	return listPostgresModel
-}
-
-func GetPgDataSource(host string, port string, user string, pwd string, dbname string, sslmode string, poolmaxcon string) string {
-	return fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=%s pool_max_conns=%s",
-		host, port, user, pwd, dbname, sslmode, poolmaxcon)
-}
-
-func NewPostgresModelList(ctx context.Context, config configpackage.Configuration, logger logger.Logger) (mapPgModel map[string]*PostgresDB, err error) {
-
-	listPgModel := GetListPgModel(ctx, config, logger)
 	mapPgModel = make(map[string]*PostgresDB)
 
-	for _, postgresModel := range listPgModel {
+	for _, pginfo := range *config.GetConfiguration().PgList {
+
+		// option := OracleOption{
+		// 	SchemaName: *dbinfo.SchemaName,
+		// 	ConnString: *dbinfo.ConnString,
+		// 	Username:   *dbinfo.Username,
+		// 	Password:   *dbinfo.Password,
+		// 	Server:     *dbinfo.Server,
+		// 	Port:       *dbinfo.Port,
+		// 	Service:    *dbinfo.Service,
+		// }
+
+		option := PgInfo{
+			Host: *pginfo.Host,
+		}
+
+		postgresModel := NewPostgresDB(ctx, logger, option)
 
 		err := postgresModel.Connect()
 		if err != nil {
@@ -66,11 +67,72 @@ func NewPostgresModelList(ctx context.Context, config configpackage.Configuratio
 
 		fmt.Printf("ping success : %#v\n", postgresModel.pginfo.DbName)
 
-		mapPgModel[*postgresModel.pginfo.DbName] = postgresModel
-
+		mapPgModel[*pginfo.DbName] = postgresModel
 	}
 
 	return mapPgModel, err
+}
+
+func NewPostgresDB(ctx context.Context, logger logger.Logger, option PgInfo) *PostgresDB {
+	return &PostgresDB{
+		ctx:    ctx,
+		logger: logger,
+		pginfo: option,
+	}
+}
+
+// func NewPostgresModelList(ctx context.Context, config configpackage.Configuration, logger logger.Logger) (mapPgModel map[string]*PostgresDB, err error) {
+
+// 	listPgModel := GetListPgModel(ctx, config, logger)
+// 	mapPgModel = make(map[string]*PostgresDB)
+
+// 	for _, postgresModel := range listPgModel {
+
+// 		err := postgresModel.Connect()
+// 		if err != nil {
+// 			logger.Error(fmt.Sprintf("unable to connect : %v", err.Error()))
+// 			// panic(err.Error())
+// 			return mapPgModel, err
+// 		}
+
+// 		err = postgresModel.conn.Ping(ctx)
+// 		if err != nil {
+// 			logger.Error(fmt.Sprintf("unable to ping : %v", err.Error()))
+// 			// panic(err.Error())
+// 			return mapPgModel, err
+// 		}
+
+// 		fmt.Printf("ping success : %#v\n", postgresModel.pginfo.DbName)
+
+// 		mapPgModel[*postgresModel.pginfo.DbName] = postgresModel
+
+// 	}
+
+// 	return mapPgModel, err
+// }
+
+// func GetListPgModel(ctx context.Context, config configpackage.Configuration, logger logger.Logger) (listPostgresModel []*PostgresDB) {
+
+// 	for _, pginfo := range *config.GetConfiguration().PgList {
+// 		// db := configpackage.PgInfo{Logger: logger, PgInfo: info}
+
+// 		db := &PostgresDB{
+// 			ctx:    ctx,
+// 			config: config,
+// 			logger: logger,
+// 			pginfo: pginfo,
+// 		}
+
+// 		listPostgresModel = append(listPostgresModel, db)
+// 	}
+
+// 	return listPostgresModel
+// }
+
+func GetPgDataSource(host string, port string, user string, pwd string, dbname string, sslmode string, poolmaxcon string) string {
+	return fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s dbname=%s sslmode=%s pool_max_conns=%s",
+		host, port, user, pwd, dbname, sslmode, poolmaxcon)
 }
 
 func (m *PostgresDB) Connect() (err error) {
@@ -79,13 +141,13 @@ func (m *PostgresDB) Connect() (err error) {
 
 	/*Connect to Postgresql*/
 	m.conn, err = pgxpool.Connect(m.ctx, GetPgDataSource(
-		*m.pginfo.Host,
-		*m.pginfo.Port,
-		*m.pginfo.Username,
-		*m.pginfo.Password,
-		*m.pginfo.DbName,
-		*m.pginfo.SSLMode,
-		*m.pginfo.PoolMaxConn,
+		m.pginfo.Host,
+		m.pginfo.Port,
+		m.pginfo.Username,
+		m.pginfo.Password,
+		m.pginfo.DbName,
+		m.pginfo.SSLMode,
+		m.pginfo.PoolMaxConn,
 	))
 	if err != nil {
 		// db.Logger.Info(fmt.Sprintf("Unable connect main postgresql database:" + err.Error()))

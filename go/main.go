@@ -76,13 +76,12 @@ func main() {
 		// MODEL / REPOSITORY / DAO
 	*/
 
-	mapPgDB, err := datastore.NewPostgresModelList(ctx, config, logger)
+	dblist, err := datastore.NewPostgresDatastoreList(ctx, config, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to make new postgres model : %v", err.Error()))
 		panic(err.Error())
 	}
-
-	postgresDB := mapPgDB[*config.SelectedPgDB]
+	postgresDB := dblist[*config.SelectedPgDB]
 
 	/*
 		SETUP SERVICE

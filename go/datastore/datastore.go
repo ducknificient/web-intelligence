@@ -1,6 +1,12 @@
 package datastore
 
-import "github.com/ducknificient/web-intelligence/go/entity"
+import (
+	"context"
+
+	"github.com/ducknificient/web-intelligence/go/config"
+	"github.com/ducknificient/web-intelligence/go/entity"
+	"github.com/ducknificient/web-intelligence/go/logger"
+)
 
 type Datastore interface {
 	StoreD(pagesource string, link string, task string, documenttype string, mimetype string) (err error)
@@ -15,4 +21,36 @@ type Datastore interface {
 	GetListImageUrl() (dataList []entity.CookpadRecipeList, err error)
 	GetAlodokterListParsed(param entity.AlodokterListDataParsedParam) (dataList []entity.AlodokterListDataParsedData, err error)
 	GetCookpadListImage() (dataList []entity.CookpadImageList, err error)
+}
+
+type DefaultDatastore struct {
+	config config.Configuration
+	logger logger.Logger
+	pgconn *PostgresDB
+}
+
+func NewDatastore(ctx context.Context, config config.Configuration, logger logger.Logger) (defaultdatastore *DefaultDatastore, err error) {
+
+	/*
+		SETUP DATASTORE IMPLEMENTATION
+
+		// MODEL / REPOSITORY / DAO
+	*/
+
+	// init oracle connection lists
+	datastore, err := NewPostgresDatastoreList(ctx, config, logger)
+	if err != nil {
+		return defaultdatastore, err
+	}
+
+	// SELECT RELEVANT DATABASE FROM MAP */
+	pgconn := datastore[*config.GetConfiguration().SelectedPgDB]
+
+	// ADD RELEVANT DATABASE TO MODEL */
+	defaultdatastore = &DefaultDatastore{
+		config: config,
+		pgconn: pgconn,
+	}
+
+	return defaultdatastore, err
 }
